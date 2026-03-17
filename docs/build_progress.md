@@ -2,16 +2,18 @@
 
 ## Current Step
 
-- Current repo status: Commit 8 finished
-- Next step: Commit 9
-- Next phase: clean README and add design docs
+- Current repo status: Commit 9 finished
+- Next step: Commit 10
+- Next phase: add ci tests and final cleanup
 
 ## Last Step
 
-- Commit 8 finished
-- Added Streamlit dashboard in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
-- Added screenshot placeholder in [`docs/dashboard_placeholder.md`](/Users/yinshi/Documents/breadrag/docs/dashboard_placeholder.md)
-- Verified with `streamlit run app/streamlit_app.py`
+- Commit 9 finished
+- Cleaned README in [`README.md`](/Users/yinshi/Documents/breadrag/README.md)
+- Added design notes in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md)
+- Added failure analysis in [`results/failure_cases.md`](/Users/yinshi/Documents/breadrag/results/failure_cases.md)
+- Corrected the standard eval config to use `500` samples by default
+- Verified with `python scripts/run_eval.py --config configs/default.yaml`
 
 ## History
 
@@ -72,3 +74,10 @@
 - Added per-query inspector with cross-config comparison
 - Added failure-case review panel
 - Added docs screenshot placeholder
+
+### Commit 9
+
+- Message: `clean README and add design docs`
+- Cleaned README to match the actual runnable state of the repo
+- Added design decisions with current retrieval trade-offs
+- Added `results/failure_cases.md` based on the 500-sample standard run

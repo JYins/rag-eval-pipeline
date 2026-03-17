@@ -81,10 +81,13 @@ def load_experiments(config_path: str) -> dict[str, Any]:
     }
 
 
-def get_rows(dataset_config: dict[str, Any]) -> list[dict[str, Any]]:
+def get_rows(dataset_config: dict[str, Any], limit_override: int | None = None) -> list[dict[str, Any]]:
     path = dataset_config.get("path", "data/eval/hotpotqa_subset.json")
     rows = load_hotpot_subset(resolve_path(path))
-    limit = int(dataset_config.get("limit", len(rows)))
+    if limit_override is not None:
+        limit = int(limit_override)
+    else:
+        limit = int(dataset_config.get("limit", len(rows)))
     return rows[:limit]
 
 
@@ -209,9 +212,9 @@ def run_experiment(
     return summary, query_rows
 
 
-def run_eval(config_path: str) -> dict[str, Any]:
+def run_eval(config_path: str, limit_override: int | None = None) -> dict[str, Any]:
     payload = load_experiments(config_path)
-    rows = get_rows(payload["dataset"])
+    rows = get_rows(payload["dataset"], limit_override=limit_override)
     encoder_cache = get_encoder_cache(payload["experiments"])
 
     summary_rows = []

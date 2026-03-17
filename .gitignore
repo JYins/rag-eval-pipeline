@@ -12,7 +12,8 @@ venv/
 
 # data and results
 data/raw/
-results/
+results/*
+!results/failure_cases.md
 sermon处理文档/
 
 # local app files

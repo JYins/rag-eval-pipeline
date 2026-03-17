@@ -1,7 +1,7 @@
 dataset:
   name: hotpotqa
   path: data/eval/hotpotqa_subset.json
-  limit: 20
+  limit: 500
 
 output:
   metrics_path: results/metrics_summary.csv

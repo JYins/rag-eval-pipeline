@@ -16,12 +16,13 @@ from src.experiment_runner import run_eval
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run retrieval eval from YAML config")
     parser.add_argument("--config", default="configs/default.yaml")
+    parser.add_argument("--limit", type=int, default=None)
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    result = run_eval(args.config)
+    result = run_eval(args.config, limit_override=args.limit)
 
     print(f"saved metrics summary: {result['metrics_path']}")
     print(f"saved per-query results: {result['per_query_path']}")
