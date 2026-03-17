@@ -7,6 +7,7 @@ import numpy as np
 
 from src.retriever_bm25 import BM25Retriever, build_bm25_retriever
 from src.retriever_dense import DenseRetriever, build_dense_retriever
+from src.retriever_hybrid import HybridRetriever, build_hybrid_retriever
 
 
 def make_doc(doc_id: str, text: str, sentences: list[str] | None = None) -> dict:
@@ -152,3 +153,74 @@ def test_build_dense_retriever_from_docs_uses_chunking(monkeypatch) -> None:
     assert len(retriever.chunks) == 3
     assert results[0]["doc_id"] == "doc_1"
     assert "diplomat" in results[0]["text"].lower()
+
+
+class StubRetriever:
+    def __init__(self, rows: list[dict]):
+        self.rows = rows
+
+    def search(self, query: str, top_k: int = 5) -> list[dict]:
+        return self.rows[:top_k]
+
+
+def test_hybrid_search_fuses_bm25_and_dense_ranks() -> None:
+    bm25_rows = [
+        {"chunk_id": "c1", "doc_id": "doc_1", "text": "apple banana", "rank": 1, "score": 8.0},
+        {"chunk_id": "c2", "doc_id": "doc_2", "text": "apple diplomat", "rank": 2, "score": 5.0},
+    ]
+    dense_rows = [
+        {"chunk_id": "c2", "doc_id": "doc_2", "text": "apple diplomat", "rank": 1, "score": 0.9},
+        {"chunk_id": "c3", "doc_id": "doc_3", "text": "basketball playoff", "rank": 2, "score": 0.6},
+    ]
+
+    retriever = HybridRetriever(
+        bm25_retriever=StubRetriever(bm25_rows),
+        dense_retriever=StubRetriever(dense_rows),
+        bm25_weight=0.3,
+        dense_weight=0.7,
+    )
+    results = retriever.search("apple diplomat", top_k=3)
+
+    assert len(results) == 3
+    assert results[0]["chunk_id"] == "c2"
+    assert results[0]["bm25_rank"] == 2
+    assert results[0]["dense_rank"] == 1
+    assert results[0]["hybrid_score"] > results[1]["hybrid_score"]
+
+
+def test_build_hybrid_retriever_from_docs_uses_shared_chunks(monkeypatch) -> None:
+    install_fake_faiss(monkeypatch)
+
+    docs = [
+        make_doc(
+            "doc_1",
+            "Shirley Temple was also a diplomat.",
+            sentences=[
+                "Shirley Temple was an actress.",
+                "Shirley Temple was also a diplomat.",
+            ],
+        ),
+        make_doc(
+            "doc_2",
+            "Janet Waldo was a radio actress.",
+            sentences=[
+                "Janet Waldo was a radio actress.",
+            ],
+        ),
+    ]
+
+    retriever = build_hybrid_retriever(
+        docs,
+        strategy="sentence",
+        max_sentences=1,
+        model_name="all-MiniLM-L6-v2",
+        encoder=FakeEncoder(),
+        bm25_weight=0.4,
+        dense_weight=0.6,
+    )
+    results = retriever.search("which actress was also a diplomat", top_k=2)
+
+    assert len(retriever.bm25_retriever.chunks) == 3
+    assert len(retriever.dense_retriever.chunks) == 3
+    assert results[0]["doc_id"] == "doc_1"
+    assert results[0]["dense_rank"] is not None

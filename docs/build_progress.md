@@ -2,17 +2,18 @@
 
 ## Current Step
 
-- Current repo status: Commit 5 finished
-- Next step: Commit 6
-- Next phase: add hybrid retrieval and eval metrics
+- Current repo status: Commit 6 finished
+- Next step: Commit 7
+- Next phase: add config-driven experiment runner
 
 ## Last Step
 
-- Commit 5 finished
-- Added FAISS helpers in [`src/indexing.py`](/Users/yinshi/Documents/breadrag/src/indexing.py)
-- Added dense retrieval in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py)
-- Extended retrieval coverage in [`tests/test_retrieval.py`](/Users/yinshi/Documents/breadrag/tests/test_retrieval.py)
-- Verified with `pytest tests/test_retrieval.py`
+- Commit 6 finished
+- Added hybrid retrieval in [`src/retriever_hybrid.py`](/Users/yinshi/Documents/breadrag/src/retriever_hybrid.py)
+- Added retrieval metrics in [`src/eval_metrics.py`](/Users/yinshi/Documents/breadrag/src/eval_metrics.py)
+- Added answer overlap scoring in [`src/answer_quality.py`](/Users/yinshi/Documents/breadrag/src/answer_quality.py)
+- Added metric tests in [`tests/test_metrics.py`](/Users/yinshi/Documents/breadrag/tests/test_metrics.py)
+- Verified with `pytest tests/test_metrics.py` and `pytest tests/test_retrieval.py`
 
 ## History
 
@@ -49,3 +50,11 @@
 - Added FAISS index helpers and dense retriever with 2 embedding model options
 - Added runnable dense CLI path
 - Extended retrieval tests to cover dense search path
+
+### Commit 6
+
+- Message: `add hybrid retrieval and eval metrics`
+- Added hybrid retrieval with weighted rank fusion
+- Added Recall@K, MRR, Hit Rate, and query scoring helpers
+- Added answer-quality proxy with token overlap and keyword hit
+- Added tests for metrics and hybrid rank fusion
