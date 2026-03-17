@@ -2,18 +2,16 @@
 
 ## Current Step
 
-- Current repo status: Commit 7 finished
-- Next step: Commit 8
-- Next phase: add streamlit dashboard
+- Current repo status: Commit 8 finished
+- Next step: Commit 9
+- Next phase: clean README and add design docs
 
 ## Last Step
 
-- Commit 7 finished
-- Added config loading and file helpers in [`src/utils.py`](/Users/yinshi/Documents/breadrag/src/utils.py)
-- Added experiment runner in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
-- Added CLI entry in [`scripts/run_eval.py`](/Users/yinshi/Documents/breadrag/scripts/run_eval.py)
-- Added runnable configs in [`configs/default.yaml`](/Users/yinshi/Documents/breadrag/configs/default.yaml) and [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
-- Verified with `python scripts/run_eval.py --config configs/default.yaml`
+- Commit 8 finished
+- Added Streamlit dashboard in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
+- Added screenshot placeholder in [`docs/dashboard_placeholder.md`](/Users/yinshi/Documents/breadrag/docs/dashboard_placeholder.md)
+- Verified with `streamlit run app/streamlit_app.py`
 
 ## History
 
@@ -66,3 +64,11 @@
 - Added per-config summary export to `results/metrics_summary.csv`
 - Added per-query export to `results/per_query_results.json`
 - Added runnable eval CLI with default config
+
+### Commit 8
+
+- Message: `add streamlit dashboard`
+- Added config comparison summary table
+- Added per-query inspector with cross-config comparison
+- Added failure-case review panel
+- Added docs screenshot placeholder
