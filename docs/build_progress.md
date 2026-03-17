@@ -2,18 +2,18 @@
 
 ## Current Step
 
-- Current repo status: Commit 6 finished
-- Next step: Commit 7
-- Next phase: add config-driven experiment runner
+- Current repo status: Commit 7 finished
+- Next step: Commit 8
+- Next phase: add streamlit dashboard
 
 ## Last Step
 
-- Commit 6 finished
-- Added hybrid retrieval in [`src/retriever_hybrid.py`](/Users/yinshi/Documents/breadrag/src/retriever_hybrid.py)
-- Added retrieval metrics in [`src/eval_metrics.py`](/Users/yinshi/Documents/breadrag/src/eval_metrics.py)
-- Added answer overlap scoring in [`src/answer_quality.py`](/Users/yinshi/Documents/breadrag/src/answer_quality.py)
-- Added metric tests in [`tests/test_metrics.py`](/Users/yinshi/Documents/breadrag/tests/test_metrics.py)
-- Verified with `pytest tests/test_metrics.py` and `pytest tests/test_retrieval.py`
+- Commit 7 finished
+- Added config loading and file helpers in [`src/utils.py`](/Users/yinshi/Documents/breadrag/src/utils.py)
+- Added experiment runner in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
+- Added CLI entry in [`scripts/run_eval.py`](/Users/yinshi/Documents/breadrag/scripts/run_eval.py)
+- Added runnable configs in [`configs/default.yaml`](/Users/yinshi/Documents/breadrag/configs/default.yaml) and [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
+- Verified with `python scripts/run_eval.py --config configs/default.yaml`
 
 ## History
 
@@ -58,3 +58,11 @@
 - Added Recall@K, MRR, Hit Rate, and query scoring helpers
 - Added answer-quality proxy with token overlap and keyword hit
 - Added tests for metrics and hybrid rank fusion
+
+### Commit 7
+
+- Message: `add config-driven experiment runner`
+- Added YAML-driven experiment loading with explicit experiments and grid expansion
+- Added per-config summary export to `results/metrics_summary.csv`
+- Added per-query export to `results/per_query_results.json`
+- Added runnable eval CLI with default config
