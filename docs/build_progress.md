@@ -2,16 +2,17 @@
 
 ## Current Step
 
-- Current repo status: Commit 4 finished
-- Next step: Commit 5
-- Next phase: add dense retrieval with faiss
+- Current repo status: Commit 5 finished
+- Next step: Commit 6
+- Next phase: add hybrid retrieval and eval metrics
 
 ## Last Step
 
-- Commit 4 finished
-- Added BM25 baseline in [`src/retriever_bm25.py`](/Users/yinshi/Documents/breadrag/src/retriever_bm25.py)
-- Added retrieval tests in [`tests/test_retrieval.py`](/Users/yinshi/Documents/breadrag/tests/test_retrieval.py)
-- Added this progress tracker in [`docs/build_progress.md`](/Users/yinshi/Documents/breadrag/docs/build_progress.md)
+- Commit 5 finished
+- Added FAISS helpers in [`src/indexing.py`](/Users/yinshi/Documents/breadrag/src/indexing.py)
+- Added dense retrieval in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py)
+- Extended retrieval coverage in [`tests/test_retrieval.py`](/Users/yinshi/Documents/breadrag/tests/test_retrieval.py)
+- Verified with `pytest tests/test_retrieval.py`
 
 ## History
 
@@ -41,3 +42,10 @@
 - Added BM25 retriever over chunked docs
 - Added simple CLI demo for one query search
 - Verified with `pytest tests/test_retrieval.py`
+
+### Commit 5
+
+- Message: `add dense retrieval with faiss`
+- Added FAISS index helpers and dense retriever with 2 embedding model options
+- Added runnable dense CLI path
+- Extended retrieval tests to cover dense search path
