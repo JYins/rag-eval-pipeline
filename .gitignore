@@ -1,0 +1,20 @@
+# python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.coverage
+
+# env
+.venv/
+venv/
+.env
+
+# data and results
+data/raw/
+results/
+sermon处理文档/
+
+# local app files
+.DS_Store
+*.log

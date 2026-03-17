@@ -1,0 +1,18 @@
+# core
+pandas
+pyyaml
+rank-bm25
+sentence-transformers
+faiss-cpu
+chromadb
+
+# eval
+ragas
+
+# app
+streamlit
+
+# dev
+pytest
+ruff
+
