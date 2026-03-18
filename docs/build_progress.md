@@ -2,17 +2,17 @@
 
 ## Current Step
 
-- Current repo status: Commit 10 finished
-- Next step: do not start sermons until the HotpotQA comparison space is documented cleanly
-- Next phase: stop after Phase A cleanup, do not start sermons yet
+- Current repo status: HotpotQA Phase A is documented through the full 15-config run
+- Next step: fill `data/eval/sermon_questions.csv` with real labeled questions and run `configs/sermon.yaml`
+- Next phase: Phase B eval on the staged sermon transcripts
 
 ## Last Step
 
-- Commit 10 finished
-- Added data-loader coverage in [`tests/test_data_loader.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader.py)
-- Expanded [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml) to 15 configs covering 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval
-- Tightened README so the documented comparison scope matches the config story
-- Verified with `ruff check .` and `pytest -q`
+- Ran the full 15-config HotpotQA grid on 500 samples and folded the results back into the docs
+- Added [`src/data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/src/data_loader_sermon.py) for local sermon transcript loading
+- Added [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) to stage transcript `.docx` files into `data/raw/sermons/`
+- Added [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) and a starter [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv)
+- Verified sermon staging against the real local transcript files
 
 ## History
 
@@ -88,3 +88,9 @@
 - Improved dense model load error message
 - Added missing data-loading test coverage
 - Tightened final comparison config coverage
+
+### Post-Commit 10 Cleanup
+
+- Ran the full HotpotQA comparison space across all 15 configs
+- Updated README, design docs, and failure-case notes so they match the real benchmark output
+- Started Phase B ingestion with real local sermon transcript files

@@ -24,6 +24,9 @@ from src.indexing import build_faiss_index, search_index
 EMBEDDING_MODELS = {
     "all-MiniLM-L6-v2": "sentence-transformers/all-MiniLM-L6-v2",
     "multi-qa-MiniLM-L6-cos-v1": "sentence-transformers/multi-qa-MiniLM-L6-cos-v1",
+    "paraphrase-multilingual-MiniLM-L12-v2": (
+        "sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2"
+    ),
 }
 
 

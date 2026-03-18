@@ -5,6 +5,8 @@ rank-bm25
 sentence-transformers
 faiss-cpu
 chromadb
+python-docx
+pypdf
 
 # eval
 ragas
@@ -15,4 +17,3 @@ streamlit
 # dev
 pytest
 ruff
-

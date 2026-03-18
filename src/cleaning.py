@@ -7,6 +7,7 @@ import unicodedata
 
 
 SPACE_RE = re.compile(r"\s+")
+CJK_RE = re.compile(r"[\u3400-\u9fff]")
 
 
 def clean_text(text: str | None) -> str:
@@ -37,3 +38,10 @@ def clean_lines(lines: list[str] | None) -> list[str]:
 def join_lines(lines: list[str] | None) -> str:
     """Join cleaned lines into one retrieval text."""
     return " ".join(clean_lines(lines))
+
+
+def has_cjk(text: str | None) -> bool:
+    """Small helper for Chinese/Japanese/Korean text handling."""
+    if text is None:
+        return False
+    return bool(CJK_RE.search(str(text)))

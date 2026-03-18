@@ -7,6 +7,8 @@ from typing import Any
 
 
 def get_gold_doc_ids(row: dict[str, Any]) -> set[str]:
+    if row.get("gold_doc_ids"):
+        return {str(item) for item in row["gold_doc_ids"]}
     return {item["title"] for item in row.get("supporting_facts", [])}
 
 

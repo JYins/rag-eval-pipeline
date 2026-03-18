@@ -8,6 +8,7 @@ from typing import Any
 
 from src.answer_quality import mean_answer_scores, score_answer_overlap
 from src.data_loader import load_hotpot_subset
+from src.data_loader_sermon import build_sermon_rows
 from src.eval_metrics import get_gold_doc_ids, mean_metrics, score_query
 from src.retriever_bm25 import build_bm25_retriever
 from src.retriever_dense import load_encoder
@@ -82,8 +83,18 @@ def load_experiments(config_path: str) -> dict[str, Any]:
 
 
 def get_rows(dataset_config: dict[str, Any], limit_override: int | None = None) -> list[dict[str, Any]]:
-    path = dataset_config.get("path", "data/eval/hotpotqa_subset.json")
-    rows = load_hotpot_subset(resolve_path(path))
+    dataset_name = dataset_config.get("name", "hotpotqa")
+    if dataset_name == "hotpotqa":
+        path = dataset_config.get("path", "data/eval/hotpotqa_subset.json")
+        rows = load_hotpot_subset(resolve_path(path))
+    elif dataset_name == "sermon":
+        rows = build_sermon_rows(
+            questions_path=dataset_config.get("questions_path", "data/eval/sermon_questions.csv"),
+            sermon_root=dataset_config.get("sermon_dir", "data/raw/sermons"),
+        )
+    else:
+        raise ValueError(f"unknown dataset: {dataset_name}")
+
     if limit_override is not None:
         limit = int(limit_override)
     else:

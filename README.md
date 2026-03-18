@@ -1,14 +1,14 @@
 # RAG Evaluation Pipeline
 
-![CI status](https://img.shields.io/badge/CI-GitHub%20Actions%20configured-brightgreen)
+[![CI](https://github.com/JYins/rag-eval-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/JYins/rag-eval-pipeline/actions/workflows/ci.yml)
 
-A config-driven evaluation framework for RAG retrieval systems, benchmarked first on HotpotQA and later planned for Chinese sermon transcripts. I built this because I wanted something small but actually runnable, where I can compare chunking and retrieval choices clearly instead of just wiring up a chatbot and hoping the retrieval is good enough.
+A config-driven evaluation framework for RAG retrieval systems, benchmarked on HotpotQA and then extended with a local Chinese sermon transcript path. I built this because I wanted something small but actually runnable, where I can compare chunking and retrieval choices clearly instead of just wiring up a chatbot and hoping the retrieval is good enough.
 
 ## Why I Built This
 
 I wanted to understand what really changes retrieval quality in a RAG pipeline. Different chunk sizes, sentence splits, BM25 vs dense retrieval, and different embedding models all look like small choices, but they can change results a lot. This repo focuses on evaluation and engineering clarity, not packaging everything into a shiny chatbot.
 
-The current Phase A path on HotpotQA is already runnable end to end: data loading, cleaning, chunking, sparse/dense/hybrid retrieval, metrics, result export, and a Streamlit dashboard. The sermon extension is still future work after the benchmark pipeline is fully cleaned up.
+The HotpotQA path is already runnable end to end: data loading, cleaning, chunking, sparse/dense/hybrid retrieval, metrics, result export, and a Streamlit dashboard. The sermon extension now has real transcript ingestion plus a labeling template, so the remaining work there is question annotation and running the same eval loop on the labeled set.
 
 ## What It Does
 
@@ -19,10 +19,11 @@ The current Phase A path on HotpotQA is already runnable end to end: data loadin
 - Runs sparse retrieval with BM25
 - Runs dense retrieval with `sentence-transformers` and FAISS
 - Runs hybrid retrieval with simple weighted rank fusion
-- Supports 2 embedding model choices
+- Supports 2 main HotpotQA embedding models plus a multilingual sermon option
 - Computes `Recall@1`, `Recall@3`, `Recall@5`, `MRR`, `Hit Rate`, and a simple answer overlap proxy
 - Runs config-driven experiments and exports summary + per-query results
 - Includes a Streamlit dashboard for cross-config inspection
+- Adds a second dataset path for Chinese sermon transcripts with local file staging and question-label templates
 
 ## Project Structure
 
@@ -35,14 +36,17 @@ rag-eval-pipeline/
 │   └── workflows/
 ├── configs/
 │   ├── default.yaml
-│   └── experiment_grid.yaml
+│   ├── experiment_grid.yaml
+│   └── sermon.yaml
 ├── data/
-│   ├── raw/                    # downloaded at runtime
+│   ├── raw/                    # downloaded or staged at runtime
 │   └── eval/
-│       └── hotpotqa_subset.json
+│       ├── hotpotqa_subset.json
+│       └── sermon_questions.csv
 ├── src/
 │   ├── __init__.py
 │   ├── data_loader.py
+│   ├── data_loader_sermon.py
 │   ├── cleaning.py
 │   ├── chunking.py
 │   ├── indexing.py
@@ -55,11 +59,13 @@ rag-eval-pipeline/
 │   └── utils.py
 ├── scripts/
 │   ├── download_data.py
+│   ├── prepare_sermon_data.py
 │   └── run_eval.py
 ├── app/
 │   └── streamlit_app.py
 ├── tests/
 │   ├── test_data_loader.py
+│   ├── test_data_loader_sermon.py
 │   ├── test_chunking.py
 │   ├── test_retrieval.py
 │   └── test_metrics.py
@@ -109,18 +115,19 @@ python src/retriever_dense.py --sample-index 0 --top-k 3 --strategy sentence --m
 
 ```bash
 pytest tests/test_data_loader.py
+pytest tests/test_data_loader_sermon.py
 pytest tests/test_chunking.py
 pytest tests/test_retrieval.py
 pytest tests/test_metrics.py
 ```
 
-### 5. Run full eval
+### 5. Run HotpotQA eval
 
 ```bash
 python scripts/run_eval.py --config configs/default.yaml
 ```
 
-This is the standard run and now uses `500` HotpotQA samples by default.
+This is the standard run and uses `500` HotpotQA samples by default.
 The dense and hybrid configs will load `sentence-transformers` models, so the first run needs network access or a local Hugging Face cache.
 
 For a quick debug run:
@@ -135,6 +142,14 @@ python scripts/run_eval.py --config configs/default.yaml --limit 20
 streamlit run app/streamlit_app.py
 ```
 
+### 7. Prepare sermon transcripts
+
+```bash
+python scripts/prepare_sermon_data.py
+```
+
+This stages the local transcript `.docx` files into `data/raw/sermons/`, creates a starter question file at `data/eval/sermon_questions.csv`, and writes a local doc index to `data/eval/sermon_doc_index.csv` for labeling help.
+
 ## Configuration
 
 The config files define settings like:
@@ -148,11 +163,13 @@ Main files:
 
 - [`configs/default.yaml`](/Users/yinshi/Documents/breadrag/configs/default.yaml)
 - [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
+- [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml)
 
 Current setup:
 
-- `configs/default.yaml` is the standard `500`-sample run
-- `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval
+- `configs/default.yaml` is the standard `500`-sample HotpotQA run
+- `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval on HotpotQA
+- `configs/sermon.yaml` is the Phase B entry point once `data/eval/sermon_questions.csv` has real labeled questions
 - `--limit` can override dataset size for fast local debugging
 
 ## Metrics & Results
@@ -166,19 +183,29 @@ The main evaluation metrics in this repo are:
 - `Hit Rate`
 - answer-quality proxy based on token overlap / keyword hit
 
-Current standard-run artifacts:
+Current run artifacts:
 
 - `results/metrics_summary.csv`
 - `results/per_query_results.json`
 - `results/failure_cases.md`
 
-Current 500-sample standard-run comparison table:
+Current 500-sample full-grid highlights:
 
-| config | retrieval_mode | embedding_model | Recall@3 | MRR | Hit Rate |
-|---|---|---|---:|---:|---:|
-| `bm25_sentence_top3` | `bm25` | — | `0.609` | `0.8059` | `0.944` |
-| `dense_sentence_top3_minilm` | `dense` | `all-MiniLM-L6-v2` | `0.664` | `0.8652` | `0.968` |
-| `hybrid_sentence_top3_minilm` | `hybrid` | `all-MiniLM-L6-v2` | `0.702` | `0.8648` | `0.992` |
+| config slice | config | Recall@3 | MRR | Hit Rate |
+|---|---|---:|---:|---:|
+| best sparse baseline | `bm25_fixed_top3` | `0.635` | `0.8196` | `0.954` |
+| best dense Recall@3 | `dense_paragraph_top3_all-MiniLM-L6-v2` | `0.726` | `0.8968` | `0.988` |
+| best dense MRR | `dense_paragraph_top3_multi-qa-MiniLM-L6-cos-v1` | `0.703` | `0.8972` | `0.986` |
+| best hybrid Recall@3 | `hybrid_paragraph_top3_all-MiniLM-L6-v2` | `0.742` | `0.8870` | `0.988` |
+| best Hit Rate | `hybrid_sentence_top3_all-MiniLM-L6-v2` | `0.702` | `0.8648` | `0.992` |
+
+Average across the whole 15-config HotpotQA grid:
+
+| retrieval mode | avg Recall@3 | avg MRR | avg Hit Rate |
+|---|---:|---:|---:|
+| `bm25` | `0.6243` | `0.8138` | `0.9500` |
+| `dense` | `0.6893` | `0.8809` | `0.9787` |
+| `hybrid` | `0.7235` | `0.8791` | `0.9897` |
 
 ## Example Output
 
@@ -188,9 +215,11 @@ Current eval CLI example:
 saved metrics summary: results/metrics_summary.csv
 saved per-query results: results/per_query_results.json
 configs run:
+- bm25_fixed_top3: Recall@3=0.6350 MRR=0.8196 HitRate=0.9540
 - bm25_sentence_top3: Recall@3=0.6090 MRR=0.8059 HitRate=0.9440
-- dense_sentence_top3_minilm: Recall@3=0.6640 MRR=0.8652 HitRate=0.9680
-- hybrid_sentence_top3_minilm: Recall@3=0.7020 MRR=0.8648 HitRate=0.9920
+- bm25_paragraph_top3: Recall@3=0.6290 MRR=0.8158 HitRate=0.9520
+- dense_fixed_top3_all-MiniLM-L6-v2: Recall@3=0.7010 MRR=0.8812 HitRate=0.9780
+- hybrid_paragraph_top3_all-MiniLM-L6-v2: Recall@3=0.7420 MRR=0.8870 HitRate=0.9880
 ```
 
 Current dense retrieval example:
@@ -216,23 +245,24 @@ I kept the design simple on purpose.
 - Dense retrieval with FAISS is the next simplest reasonable step for semantic search
 - Hybrid retrieval is simple enough to add, but still useful for checking multi-hop coverage
 - The standard eval config now uses `500` samples, while `--limit` is reserved for debug runs only
+- In the full 15-config benchmark, paragraph chunking gave the strongest average retrieval quality while hybrid gave the best average coverage
+- The sermon path stages real local transcripts first, then expects manual labeling instead of pretending benchmark labels already exist
 
 More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md).
 
 ## Limitations
 
-- The sermon transcript dataset has not started yet
-- The committed standard-run summary still highlights the smaller default comparison; the full grid should be run and documented separately because it is much heavier
+- The sermon transcript files are staged, but `data/eval/sermon_questions.csv` still needs real labeled questions before Phase B metrics can run
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
-- CI is now checked in with GitHub Actions for `ruff` + `pytest`
+- The dashboard already works for any result file pair, but the sermon dashboard view will only be meaningful after the sermon eval artifacts exist
 
 ## Future Work
 
-- Run and document the second embedding model on the same 500-sample setup
-- Run and document the full experiment grid across all 3 chunking strategies
+- Finish 20-50 sermon question labels and run `configs/sermon.yaml`
+- Add sermon results into the dashboard as a second dataset comparison view
+- Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
-- Extend the same framework to Chinese sermon transcripts
 - Add optional RAGAS-based answer evaluation
 - Compare more embedding models if the simple baseline stays stable
 

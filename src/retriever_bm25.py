@@ -16,13 +16,16 @@ if str(ROOT_DIR) not in sys.path:
 from rank_bm25 import BM25Okapi
 
 from src.chunking import chunk_docs
-from src.cleaning import clean_text
+from src.cleaning import clean_text, has_cjk
 from src.data_loader import load_hotpot_subset
 
 
 def tokenize(text: str) -> list[str]:
     text = clean_text(text).lower()
-    return text.split()
+    words = text.split()
+    if len(words) > 1 or not has_cjk(text):
+        return words
+    return list(text)
 
 
 class BM25Retriever:

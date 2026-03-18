@@ -4,7 +4,18 @@ from __future__ import annotations
 
 from typing import Any
 
-from src.cleaning import clean_lines, clean_text
+from src.cleaning import clean_lines, clean_text, has_cjk
+
+
+def get_fixed_units(text: str) -> tuple[list[str], str]:
+    value = clean_text(text)
+    if not value:
+        return [], " "
+
+    words = value.split()
+    if len(words) > 1 or not has_cjk(value):
+        return words, " "
+    return list(value), ""
 
 
 def make_chunk(
@@ -47,20 +58,20 @@ def chunk_fixed_size(
     if overlap >= chunk_size:
         raise ValueError("overlap should be smaller than chunk_size")
 
-    words = clean_text(doc.get("text", "")).split()
-    if not words:
+    units, joiner = get_fixed_units(str(doc.get("text", "")))
+    if not units:
         return []
 
     chunks = []
     step = chunk_size - overlap
-    for chunk_index, start in enumerate(range(0, len(words), step)):
-        piece = words[start : start + chunk_size]
+    for chunk_index, start in enumerate(range(0, len(units), step)):
+        piece = units[start : start + chunk_size]
         if not piece:
             continue
         chunks.append(
             make_chunk(
                 doc=doc,
-                text=" ".join(piece),
+                text=joiner.join(piece),
                 chunk_index=chunk_index,
                 strategy="fixed",
             )

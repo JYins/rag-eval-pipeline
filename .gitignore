@@ -12,6 +12,7 @@ venv/
 
 # data and results
 data/raw/
+data/eval/sermon_doc_index.csv
 results/*
 !results/failure_cases.md
 sermon处理文档/
