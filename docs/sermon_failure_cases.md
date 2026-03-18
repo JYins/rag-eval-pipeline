@@ -1,22 +1,23 @@
 # Sermon Failure Cases
 
-Generated from the optional ChromaDB + RAGAS smoke run on March 17, 2026 with:
+Generated from the optional ChromaDB + RAGAS smoke run on March 18, 2026 with:
 
 ```bash
 python scripts/run_eval.py --config configs/sermon_chromadb_ragas.yaml
 ```
 
-Run summary on 21 labeled sermon questions:
+Run summary on 28 labeled sermon questions:
 
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
-| `dense_sentence_top3_sermon_chromadb_ragas` | 0.8095 | 0.6190 | 0.8095 | 0.8095 |
+| `dense_sentence_top3_sermon_chromadb_ragas` | 0.7857 | 0.6071 | 0.7857 | 0.7857 |
 
 Main patterns from this smoke run:
 
 - The multilingual dense retriever is clearly usable on the Chinese sermon path, and it beats the earlier BM25 sermon baseline by a large margin.
 - The misses are still mostly bridge or scripture-reference questions where many sermons share similar church vocabulary.
 - The optional `ragas_context_recall` lines up closely with `Recall@3` here because both are using gold document ids rather than generated answers.
+- A few remaining misses are now mixed with local transcript hygiene problems too, especially duplicated or suspiciously mislabeled sermon files that surface as strong false positives.
 
 ## Case 1: The retriever stayed near doctrine language but missed the suffering sermon
 
@@ -110,5 +111,5 @@ Why this failed:
 
 - The optional ChromaDB + RAGAS run is real and useful, not just a checkbox path.
 - The hardest sermon misses are not random. They cluster around repeated doctrine language, Bible references, and series-level overlap.
-- A next improvement could be doc-level deduping or reranking, because repeated wrong chunks show up in several misses.
+- A next improvement is data cleanup as much as retrieval tuning, because duplicated sermon sources now show up inside the remaining error set.
 - Another improvement is to keep expanding the label set with more discriminative question wording, especially for scripture-reference prompts.

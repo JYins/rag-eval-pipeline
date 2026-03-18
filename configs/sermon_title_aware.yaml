@@ -2,7 +2,7 @@ dataset:
   name: sermon
   sermon_dir: data/raw/sermons
   questions_path: data/eval/sermon_questions.csv
-  limit: 21
+  limit: 50
 
 output:
   metrics_path: results/sermon_title_aware_metrics.csv

@@ -2,19 +2,24 @@
 
 ## Current Step
 
-- Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: grow the sermon label set enough to decide whether the recommended dense path should replace the current shared sermon baseline
-- Small fix this round: added a separate recommended dense sermon config so the best current path has one stable entry point without hiding the baseline comparison
-- Next phase: tighten the labeled questions where they are too easy or too noisy, then rerun the sermon comparison set
+- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and every sermon dashboard preset has now been rerun on the same 28-question label set
+- Next step: clean the suspicious duplicated / mislabeled sermon source files, then keep growing the label set
+- Small fix this round: expanded `data/eval/sermon_questions.csv` from 21 to 28 rows and lifted every sermon study config to `limit: 50` so they all read the same pool
+- Next phase: separate retrieval misses from transcript hygiene issues, especially around the duplicated sermon files that now show up in the remaining misses
 
 ## Last Step
+
+- Added 7 new high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), focused on Day2-Day6 seminar passages that can be read directly from the local transcripts
+- Raised the study config limits in [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml), [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml), [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml), [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml), [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml), and [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml) so all sermon presets run against the same expanded pool
+- Re-ran every sermon result artifact and verified the current best path on 28 questions: recommended dense Recall@3 `0.9286`, MRR `0.8214`, Hit Rate `0.9286`
+- Verified locally with `28` passing targeted tests from [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
+
+## Previous Step
 
 - Added [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml) as the one-command best sermon dense path
 - Exposed it in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) as `Sermon (Recommended Dense)` without changing the shared baseline preset
 - Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py) for the new recommended config and preset
-- Verified the recommended dense run locally: Recall@3 `1.0000`, MRR `0.8889`, Hit Rate `1.0000`
-
-## Previous Step
+- Verified the recommended dense run locally on the earlier 21-question set before this expansion pass
 
 - Added [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml) as a clean opt-in study for `dedupe_docs: true` instead of changing the main sermon baseline
 - Verified the trade-off locally: doc dedupe helped the dense sermon run's Recall@3, but it hurt BM25 and hybrid hit rate, so it stays experimental
@@ -23,7 +28,7 @@
 - Installed local `chromadb` and `ragas` into the project venv and verified the optional path with [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - Fixed [`src/indexing.py`](/Users/yinshi/Documents/breadrag/src/indexing.py) to batch Chroma inserts so larger chunk sets do not exceed ChromaDB's max batch size
 - Added regression coverage in [`tests/test_retrieval.py`](/Users/yinshi/Documents/breadrag/tests/test_retrieval.py) and [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for the optional config and Chroma batching
-- Verified the real smoke run locally: Recall@3 `0.8095`, MRR `0.6190`, Hit Rate `0.8095`, `ragas_context_recall` `0.8095`
+- Verified the real smoke run locally on the earlier 21-question set before this expansion pass
 
 - Added `--skip-unavailable` to [`scripts/run_eval.py`](/Users/yinshi/Documents/breadrag/scripts/run_eval.py) and skip reporting in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
 - Kept the default path fail-loud, but now offline debug runs can still export `metrics_summary.csv` with explicit `status=skipped` rows
@@ -40,7 +45,7 @@
 - Restored dense and hybrid sermon runs in [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) with the multilingual MiniLM model
 - Added a dataset preset switch in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can jump between HotpotQA and sermon artifacts
 - Cached shared retrievers in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) so repeated sermon docs do not rebuild indexes for every query
-- Verified the current sermon run locally: dense Recall@3 `0.7619`, MRR `0.7040`, Hit Rate `0.8571`
+- Verified the first sermon dense baseline locally on the earlier 21-question set before later studies and relabeling
 
 ## History
 
