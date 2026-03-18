@@ -104,8 +104,10 @@ def install_fake_faiss(monkeypatch) -> None:
 class FakeChromaCollection:
     def __init__(self):
         self.rows = []
+        self.add_calls = 0
 
     def add(self, ids, documents, metadatas, embeddings) -> None:
+        self.add_calls += 1
         for item in zip(ids, documents, metadatas, embeddings):
             row_id, text, metadata, vector = item
             self.rows.append(
@@ -133,8 +135,15 @@ class FakeChromaCollection:
 
 
 class FakeChromaClient:
+    def __init__(self, max_batch_size: int = 10):
+        self.max_batch_size = max_batch_size
+        self.collection = FakeChromaCollection()
+
     def get_or_create_collection(self, name: str):
-        return FakeChromaCollection()
+        return self.collection
+
+    def get_max_batch_size(self) -> int:
+        return self.max_batch_size
 
 
 def install_fake_chromadb(monkeypatch) -> None:
@@ -212,6 +221,23 @@ def test_dense_search_supports_chromadb_backend(monkeypatch) -> None:
     assert results[0]["chunk_id"] == "c1"
     assert results[0]["rank"] == 1
     assert results[0]["score"] >= results[1]["score"]
+
+
+def test_dense_search_batches_large_chromadb_inserts(monkeypatch) -> None:
+    client = FakeChromaClient(max_batch_size=2)
+    fake_module = SimpleNamespace(Client=lambda: client)
+    monkeypatch.setitem(sys.modules, "chromadb", fake_module)
+
+    chunks = [
+        {"chunk_id": "c1", "doc_id": "a", "source": "unit-test", "text": "apple banana fruit market"},
+        {"chunk_id": "c2", "doc_id": "b", "source": "unit-test", "text": "basketball team wins playoff game"},
+        {"chunk_id": "c3", "doc_id": "c", "source": "unit-test", "text": "apple diplomat speech"},
+    ]
+
+    DenseRetriever(chunks, encoder=FakeEncoder(), backend="chromadb")
+
+    assert client.collection.add_calls == 2
+    assert len(client.collection.rows) == 3
 
 
 class StubRetriever:

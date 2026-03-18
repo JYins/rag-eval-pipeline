@@ -76,6 +76,12 @@ def search_index(
     return scores, ids
 
 
+def iter_batches(items: list[Any], batch_size: int) -> list[list[Any]]:
+    if batch_size <= 0:
+        raise ValueError("batch_size should be > 0")
+    return [items[index : index + batch_size] for index in range(0, len(items), batch_size)]
+
+
 def build_chroma_collection(
     vectors: np.ndarray | list[list[float]],
     chunks: list[dict[str, Any]],
@@ -87,6 +93,7 @@ def build_chroma_collection(
     client = chromadb.Client()
     name = collection_name or f"rag_eval_{uuid4().hex}"
     collection = client.get_or_create_collection(name=name)
+    batch_size = client.get_max_batch_size() if hasattr(client, "get_max_batch_size") else len(chunks)
 
     ids = [chunk["chunk_id"] for chunk in chunks]
     documents = [chunk["text"] for chunk in chunks]
@@ -100,12 +107,24 @@ def build_chroma_collection(
         for chunk in chunks
     ]
 
-    collection.add(
-        ids=ids,
-        documents=documents,
-        metadatas=metadatas,
-        embeddings=rows.tolist(),
-    )
+    embedding_rows = rows.tolist()
+    id_batches = iter_batches(ids, batch_size)
+    document_batches = iter_batches(documents, batch_size)
+    metadata_batches = iter_batches(metadatas, batch_size)
+    embedding_batches = iter_batches(embedding_rows, batch_size)
+
+    for id_batch, document_batch, metadata_batch, embedding_batch in zip(
+        id_batches,
+        document_batches,
+        metadata_batches,
+        embedding_batches,
+    ):
+        collection.add(
+            ids=id_batch,
+            documents=document_batch,
+            metadatas=metadata_batch,
+            embeddings=embedding_batch,
+        )
     return collection
 
 

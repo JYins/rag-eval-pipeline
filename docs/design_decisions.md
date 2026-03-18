@@ -161,4 +161,4 @@ This keeps the extension real. The code can already load the transcript files an
 - finish the sermon question labels now that the transcript files are staged into `data/raw/sermons/`
 - run the same eval loop on the sermon config and compare where HotpotQA trends do or do not transfer
 - add a more realistic answer metric later, either RAGAS or a small generated-answer path
-- compare FAISS vs ChromaDB on the same dense configs once the extra dependency is installed in the local env
+- compare FAISS vs ChromaDB more broadly after the first real smoke run, which now works through `configs/sermon_chromadb_ragas.yaml`

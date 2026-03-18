@@ -39,6 +39,7 @@ rag-eval-pipeline/
 ├── configs/
 │   ├── default.yaml
 │   ├── experiment_grid.yaml
+│   ├── sermon_chromadb_ragas.yaml
 │   └── sermon.yaml
 ├── data/
 │   ├── raw/                    # downloaded or staged at runtime
@@ -176,6 +177,20 @@ The current sermon config compares:
 - multilingual dense retrieval with `paraphrase-multilingual-MiniLM-L12-v2`
 - multilingual hybrid retrieval
 
+### 9. Run the optional ChromaDB + RAGAS smoke config
+
+```bash
+python scripts/run_eval.py --config configs/sermon_chromadb_ragas.yaml
+```
+
+This is a small real verification config for the optional stack:
+
+- dense backend: `chromadb`
+- optional metric: `ragas_context_recall`
+- output files:
+  - `results/sermon_chromadb_ragas_metrics.csv`
+  - `results/sermon_chromadb_ragas_per_query.json`
+
 ## Configuration
 
 The config files define settings like:
@@ -189,6 +204,7 @@ Main files:
 
 - [`configs/default.yaml`](/Users/yinshi/Documents/breadrag/configs/default.yaml)
 - [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
+- [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml)
 
 Current setup:
@@ -235,6 +251,8 @@ Current run artifacts:
 - `results/failure_cases.md`
 - `results/sermon_metrics_summary.csv`
 - `results/sermon_per_query_results.json`
+- `results/sermon_chromadb_ragas_metrics.csv`
+- `results/sermon_chromadb_ragas_per_query.json`
 
 Current 500-sample full-grid highlights:
 
@@ -261,6 +279,12 @@ Current sermon run highlights on the 21 labeled transcript questions:
 | `bm25_sentence_top3_sermon` | `0.2857` | `0.2222` | `0.3810` |
 | `dense_sentence_top3_sermon_multilingual` | `0.7619` | `0.7040` | `0.8571` |
 | `hybrid_sentence_top3_sermon_multilingual` | `0.6190` | `0.4048` | `0.7143` |
+
+Optional ChromaDB + RAGAS smoke run:
+
+| config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
+|---|---:|---:|---:|---:|
+| `dense_sentence_top3_sermon_chromadb_ragas` | `0.8095` | `0.6190` | `0.8095` | `0.8095` |
 
 ## Example Output
 
@@ -310,8 +334,9 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 - The sermon eval set is still small at 21 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
-- The optional ChromaDB and RAGAS paths are now wired, but I have not re-run the published benchmark tables with those options yet
+- The optional ChromaDB and RAGAS paths are now verified with a real smoke config, but I have not folded them into the main published benchmark tables
 - The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
+- The current `ragas` / `langchain` stack emits a Python 3.14 warning during the optional run, even though the config finishes successfully
 
 ## Future Work
 
