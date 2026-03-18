@@ -380,19 +380,19 @@ Current metadata-rerank and recommended dense sermon runs on the same 35 labeled
 | `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9333` | `1.0000` | |
 | `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9333` | `1.0000` | |
 
-The optional doc-dedupe, doc-penalty, and ChromaDB + RAGAS study files are still useful, but the last completed numbers below are from the earlier 28-question checkpoint while the slower reruns catch up:
+Current optional sermon-only studies on the same 35 labeled questions:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
-| `bm25_sentence_top3_sermon_dedup` | `0.2143` | `0.1488` | `0.2143` |
-| `dense_sentence_top3_sermon_multilingual_dedup` | `0.8214` | `0.6905` | `0.8214` |
-| `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6071` | `0.3571` | `0.6071` |
-| `bm25_sentence_top3_sermon_doc_penalty` | `0.2143` | `0.1488` | `0.2143` |
-| `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7857` | `0.6786` | `0.7857` |
-| `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.6071` | `0.3571` | `0.6071` |
-| `dense_sentence_top3_sermon_chromadb_ragas` | `0.7857` | `0.6429` | `0.7857` |
+| `bm25_sentence_top3_sermon_dedup` | `0.2000` | `0.1476` | `0.2000` |
+| `dense_sentence_top3_sermon_multilingual_dedup` | `0.8000` | `0.6762` | `0.8000` |
+| `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6000` | `0.3571` | `0.6000` |
+| `bm25_sentence_top3_sermon_doc_penalty` | `0.2000` | `0.1476` | `0.2000` |
+| `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7714` | `0.6667` | `0.7714` |
+| `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.6000` | `0.3571` | `0.6000` |
+| `dense_sentence_top3_sermon_chromadb_ragas` | `0.7714` | `0.6429` | `0.7714` |
 
-This is why both doc-level reranking behaviors still stay opt-in. The faster main comparison path is already strong on 35 questions, while these slower sermon-only studies are mainly there for inspection rather than as defaults.
+This is why both doc-level reranking behaviors still stay opt-in. After refreshing them on the same 35-question set, they still do not beat the main recommended dense path, so they remain useful for inspection rather than as defaults. The ChromaDB + RAGAS run is also fully refreshed now, but it is still clearly weaker than the FAISS-based recommended dense path on the newer day-specific sermon questions.
 
 This is the clearest sermon-specific gain so far. For multilingual dense retrieval, simply including the sermon title in each chunk helps the model anchor verse, sermon-series, and day-based questions much better. It is not a universal trick though, because BM25 gets much worse when the titles dominate token overlap.
 

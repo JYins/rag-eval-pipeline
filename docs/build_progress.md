@@ -4,19 +4,23 @@
 
 - Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the current sermon main path has now been pressure-tested on 35 labeled questions
 - Next step: keep expanding the sermon label set from this cleaner 13-doc baseline instead of assuming the current full-hit result is already stable enough
-- Small note this round: the main sermon configs are already refreshed on 35 labels, while the slower doc-dedupe / doc-penalty / ChromaDB study artifacts are still kept as the earlier 28-question checkpoint for now
+- Small note this round: the slower sermon-only studies are now also refreshed on 35 labels after forcing offline model loading through the local cache
 - Next phase: add another batch of discriminative sermon labels, especially around scripture-reference prompts and same-series day questions
 
 ## Last Step
 
 - Added 7 new high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), taking the local sermon eval set from 28 to 35 questions
-- Re-ran the main sermon comparison configs on the cleaned 13-doc staged corpus
+- Re-ran the main sermon comparison configs plus the slower sermon-only study configs on the cleaned 13-doc staged corpus
 - Verified the current main-path results on 35 questions:
   - baseline dense: Recall@3 `0.7429`, MRR `0.6652`, Hit Rate `0.8000`
   - title-aware dense: Recall@3 `0.9143`, MRR `0.7810`, Hit Rate `0.9143`
   - metadata-reranked dense / recommended dense: Recall@3 `1.0000`, MRR `0.9333`, Hit Rate `1.0000`
-- Kept the slower sermon-only study artifacts honest as a visible 28-question checkpoint instead of silently replacing them with partial reruns
-- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md), [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md), and [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md) so the sermon narrative matches the current 35-question main path plus the older 28-question slow-study checkpoint
+- Verified the current slower study results on the same 35-question set:
+  - doc dedupe dense: Recall@3 `0.8000`, MRR `0.6762`, Hit Rate `0.8000`
+  - doc penalty dense: Recall@3 `0.7714`, MRR `0.6667`, Hit Rate `0.7714`
+  - ChromaDB + RAGAS dense: Recall@3 `0.7714`, MRR `0.6429`, Hit Rate `0.7714`, `ragas_context_recall=0.7714`
+- Used `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1` for these reruns so the local Hugging Face cache could be reused even when the machine could not resolve `huggingface.co`
+- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md) so the sermon narrative now matches a fully refreshed 35-question checkpoint
 
 - Added a small `series_hint_boost` path to [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and wired it through [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) plus [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
 - Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for series-aware reranking so `第四天布道会` does not get hijacked by `第四讲`
