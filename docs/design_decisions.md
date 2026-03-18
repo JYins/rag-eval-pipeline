@@ -167,7 +167,7 @@ I also kept the next sermon fix explainable in the same spirit: instead of pushi
 - keep duplicate-file cleanup explicit at staging time instead of doing automatic near-duplicate filtering inside the loader, because that is easier to explain and safer to debug
 - keep the sermon doc-level reranking ideas as opt-in studies for now, because hard doc dedupe helped dense recall but hurt BM25 / hybrid, and even after fixing the soft `doc_repeat_penalty` tie-break the gain is still sermon-specific
 - keep the new title-aware chunk text as a sermon retrieval study rather than a global default, because it helps multilingual dense retrieval a lot but hurts BM25 badly in the same dataset
-- keep the sermon metadata-aware rerank as a study too, because it is a small, explainable local heuristic that is still the best local path on the current 28 questions, but that is still too small and too sermon-specific to call a stable benchmark default
-- inspect the last remaining sermon miss before adding any more local heuristics, because after duplicate cleanup the error set is finally small enough to reason about one by one
+- keep the sermon metadata-aware rerank as a study too, because it is a small, explainable local heuristic that is still the best local path on the current 35 questions, but that is still too small and too sermon-specific to call a stable benchmark default
+- keep treating each full-hit checkpoint as provisional; the right pressure test now is to keep expanding the sermon label set, not to pile on more heuristics after one clean pass
 - add a more realistic answer metric later, either RAGAS or a small generated-answer path
 - compare FAISS vs ChromaDB more broadly after the first real smoke run, which now works through `configs/sermon_chromadb_ragas.yaml`

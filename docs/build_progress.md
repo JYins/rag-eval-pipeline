@@ -2,12 +2,20 @@
 
 ## Current Step
 
-- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the default sermon staging path now excludes the two confirmed duplicate transcript files
-- Next step: expand the sermon label set again from this cleaner 13-doc baseline and see whether the current recommended dense path holds up
-- Small fix this round: made the sermon metadata rerank series-aware in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) so `布道会` day queries stay inside the seminar series before title/day boosts are applied
-- Next phase: treat the current 28-question full-hit result as a checkpoint, not an endpoint, and pressure-test it with more labels
+- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the current sermon main path has now been pressure-tested on 35 labeled questions
+- Next step: keep expanding the sermon label set from this cleaner 13-doc baseline instead of assuming the current full-hit result is already stable enough
+- Small note this round: the main sermon configs were re-run on 35 labels, while the slower doc-dedupe / doc-penalty / ChromaDB study artifacts are still kept as the earlier 28-question checkpoint until those reruns finish cleanly
+- Next phase: add another batch of discriminative sermon labels, especially around scripture-reference prompts and same-series day questions
 
 ## Last Step
+
+- Added 7 new high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), taking the local sermon eval set from 28 to 35 questions
+- Re-ran the main sermon comparison configs on the cleaned 13-doc staged corpus
+- Verified the current main-path results on 35 questions:
+  - baseline dense: Recall@3 `0.7429`, MRR `0.6652`, Hit Rate `0.8000`
+  - title-aware dense: Recall@3 `0.9143`, MRR `0.7810`, Hit Rate `0.9143`
+  - metadata-reranked dense / recommended dense: Recall@3 `1.0000`, MRR `0.9333`, Hit Rate `1.0000`
+- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md) so the sermon narrative matches the new 35-question checkpoint
 
 - Added a small `series_hint_boost` path to [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and wired it through [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) plus [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
 - Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for series-aware reranking so `第四天布道会` does not get hijacked by `第四讲`

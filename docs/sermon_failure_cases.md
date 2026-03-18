@@ -1,12 +1,12 @@
 # Sermon Failure Cases
 
-Generated from the optional ChromaDB + RAGAS smoke run on March 18, 2026 after cleaning the default staged sermon corpus with [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt):
+Generated from the latest completed optional ChromaDB + RAGAS smoke run on March 18, 2026 after cleaning the default staged sermon corpus with [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt):
 
 ```bash
 python scripts/run_eval.py --config configs/sermon_chromadb_ragas.yaml
 ```
 
-Run summary on 28 labeled sermon questions:
+Run summary on the earlier 28-question sermon checkpoint:
 
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
@@ -113,3 +113,4 @@ Why this failed:
 - The hardest sermon misses are not random. They cluster around repeated doctrine language, Bible references, and series-level overlap.
 - The duplicate-file cleanup was worth doing first, because it removed a fake source of error and improved the stronger dense sermon runs.
 - Another improvement is to keep expanding the label set with more discriminative question wording, especially for scripture-reference prompts.
+- The main sermon path has already moved on to a 35-question checkpoint, so this note stays here mainly as a record of where the optional ChromaDB study was still weak.

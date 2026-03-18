@@ -362,67 +362,52 @@ Average across the whole 15-config HotpotQA grid:
 | `dense` | `0.6893` | `0.8809` | `0.9787` |
 | `hybrid` | `0.7235` | `0.8791` | `0.9897` |
 
-Current sermon run highlights on the 28 labeled transcript questions:
+Current sermon baseline highlights on the 35 labeled transcript questions:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
-| `bm25_sentence_top3_sermon` | `0.2143` | `0.1667` | `0.2857` |
-| `dense_sentence_top3_sermon_multilingual` | `0.7500` | `0.6768` | `0.8214` |
-| `hybrid_sentence_top3_sermon_multilingual` | `0.6071` | `0.3661` | `0.6429` |
+| `bm25_sentence_top3_sermon` | `0.2000` | `0.1876` | `0.3714` |
+| `dense_sentence_top3_sermon_multilingual` | `0.7429` | `0.6652` | `0.8000` |
+| `hybrid_sentence_top3_sermon_multilingual` | `0.6000` | `0.3643` | `0.6286` |
 
-Optional ChromaDB + RAGAS smoke run:
+Current title-aware sermon study on the same 35 labeled questions:
 
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
-| `dense_sentence_top3_sermon_chromadb_ragas` | `0.7857` | `0.6429` | `0.7857` | `0.7857` |
+| `bm25_sentence_top3_sermon_title_aware` | `0.0571` | `0.0571` | `0.0571` | |
+| `dense_sentence_top3_sermon_multilingual_title_aware` | `0.9143` | `0.7810` | `0.9143` | |
+| `hybrid_sentence_top3_sermon_multilingual_title_aware` | `0.7143` | `0.4143` | `0.8286` | |
 
-Optional doc-dedupe study:
+Current metadata-rerank and recommended dense sermon runs on the same 35 labeled questions:
+
+| config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
+|---|---:|---:|---:|---:|
+| `dense_sentence_top3_sermon_multilingual_title_aware_base` | `0.9143` | `0.7810` | `0.9143` | |
+| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9333` | `1.0000` | |
+| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9333` | `1.0000` | |
+
+The optional doc-dedupe, doc-penalty, and ChromaDB + RAGAS study files are still useful, but the last completed numbers below are from the earlier 28-question checkpoint while the slower reruns catch up:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
 | `bm25_sentence_top3_sermon_dedup` | `0.2143` | `0.1488` | `0.2143` |
 | `dense_sentence_top3_sermon_multilingual_dedup` | `0.8214` | `0.6905` | `0.8214` |
 | `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6071` | `0.3571` | `0.6071` |
-
-Optional doc-penalty study:
-
-| config | Recall@3 | MRR | Hit Rate |
-|---|---:|---:|---:|
 | `bm25_sentence_top3_sermon_doc_penalty` | `0.2143` | `0.1488` | `0.2143` |
 | `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7857` | `0.6786` | `0.7857` |
 | `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.6071` | `0.3571` | `0.6071` |
+| `dense_sentence_top3_sermon_chromadb_ragas` | `0.7857` | `0.6429` | `0.7857` |
 
-This is why both doc-level reranking behaviors stay opt-in. Even after expanding the label set, the softer penalty still only ties hard dedupe on the dense path, while BM25 and hybrid do not improve, so I keep these as sermon-only studies instead of changing the main baseline.
-
-Optional title-aware study:
-
-| config | Recall@3 | MRR | Hit Rate |
-|---|---:|---:|---:|
-| `bm25_sentence_top3_sermon_title_aware` | `0.0714` | `0.0714` | `0.0714` |
-| `dense_sentence_top3_sermon_multilingual_title_aware` | `0.9286` | `0.7619` | `0.9286` |
-| `hybrid_sentence_top3_sermon_multilingual_title_aware` | `0.6786` | `0.4107` | `0.8214` |
+This is why both doc-level reranking behaviors still stay opt-in. The faster main comparison path is already strong on 35 questions, while these slower sermon-only studies are mainly there for inspection rather than as defaults.
 
 This is the clearest sermon-specific gain so far. For multilingual dense retrieval, simply including the sermon title in each chunk helps the model anchor verse, sermon-series, and day-based questions much better. It is not a universal trick though, because BM25 gets much worse when the titles dominate token overlap.
-
-Optional metadata-rerank study:
-
-| config | Recall@3 | MRR | Hit Rate |
-|---|---:|---:|---:|
-| `dense_sentence_top3_sermon_multilingual_title_aware_base` | `0.9286` | `0.7619` | `0.9286` |
-| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9167` | `1.0000` |
 
 This is still the cleanest sermon retrieval path so far. After excluding the two confirmed duplicate sermon files from the default staged corpus, I added one more tiny series-aware rerank hint so `布道会` day queries stop boosting the wrong sermon series.
 
 - `sermon_004`: query asks about the opening of a sermon, so an early-chunk boost pulls the correct sermon to rank 1
 - `sermon_021`: query asks about the last day of the seminar, so a day/title hint boosts `Day6` over semantically similar `Day4` / `Day5` candidates
 
-Current recommended sermon dense config:
-
-| config | Recall@3 | MRR | Hit Rate |
-|---|---:|---:|---:|
-| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9167` | `1.0000` |
-
-I keep this as a separate recommended config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path on the current 28-question set.
+I keep the recommended dense path as a separate config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path on the current 35-question set.
 
 ## Example Output
 
@@ -472,7 +457,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 ## Limitations
 
-- The sermon eval set is still small at 28 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
+- The sermon eval set is still small at 35 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - The optional ChromaDB and RAGAS paths are now verified with a real smoke config, but I have not folded them into the main published benchmark tables
 - The doc-level reranking studies are useful for failure analysis, but even after the soft rerank tie-break fix they are still sermon-only experiments, not a new default path
