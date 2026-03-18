@@ -2,19 +2,25 @@
 
 ## Current Step
 
-- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and every sermon dashboard preset has now been rerun on the same 28-question label set
-- Next step: clean the suspicious duplicated / mislabeled sermon source files, then keep growing the label set
-- Small fix this round: expanded `data/eval/sermon_questions.csv` from 21 to 28 rows and lifted every sermon study config to `limit: 50` so they all read the same pool
-- Next phase: separate retrieval misses from transcript hygiene issues, especially around the duplicated sermon files that now show up in the remaining misses
+- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the default sermon staging path now excludes the two confirmed duplicate transcript files
+- Next step: inspect the last remaining recommended-dense miss (`sermon_024`) and decide whether it needs a better label, a small rerank hint, or cleaner source text
+- Small fix this round: added [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt) and wired it into [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so default staging now keeps only 13 sermon docs
+- Next phase: keep the default corpus clean, then expand the sermon label set again from a less noisy baseline
 
 ## Last Step
+
+- Added an explicit exclusion list in [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt) for the confirmed duplicate `第5讲` and `第9讲` source files
+- Updated [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so default staging applies that exclusion list before creating symlinks, while leaving the original local `.docx` files untouched
+- Added regression coverage in [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py) for parsing the exclusion list and skipping blocked sermon files during staging
+- Re-ran every sermon result artifact on the cleaned 13-doc staged corpus and verified the current best path on 28 questions: recommended dense Recall@3 `0.9643`, MRR `0.8571`, Hit Rate `0.9643`
+- Verified locally with `30` passing targeted tests from [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
+
+## Previous Step
 
 - Added 7 new high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), focused on Day2-Day6 seminar passages that can be read directly from the local transcripts
 - Raised the study config limits in [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml), [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml), [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml), [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml), [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml), and [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml) so all sermon presets run against the same expanded pool
 - Re-ran every sermon result artifact and verified the current best path on 28 questions: recommended dense Recall@3 `0.9286`, MRR `0.8214`, Hit Rate `0.9286`
 - Verified locally with `28` passing targeted tests from [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
-
-## Previous Step
 
 - Added [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml) as the one-command best sermon dense path
 - Exposed it in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) as `Sermon (Recommended Dense)` without changing the shared baseline preset

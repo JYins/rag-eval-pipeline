@@ -4,7 +4,7 @@ from pathlib import Path
 
 from docx import Document
 
-from scripts.prepare_sermon_data import stage_sermon_files
+from scripts.prepare_sermon_data import load_excluded_names, stage_sermon_files
 from src.data_loader_sermon import build_sermon_rows, load_sermon_documents, parse_gold_doc_ids
 
 
@@ -86,3 +86,35 @@ def test_stage_sermon_files_replaces_stale_links(tmp_path: Path) -> None:
     paths = sorted(path.name for path in target_dir.iterdir())
     assert "旧文件.docx" not in paths
     assert len(paths) == 2
+
+
+def test_load_excluded_names_skips_comments_and_blank_lines(tmp_path: Path) -> None:
+    exclude_path = tmp_path / "sermon_excluded_files.txt"
+    exclude_path.write_text(
+        "\n# duplicated files\n第五讲.docx\n\n第九讲.docx\n",
+        encoding="utf-8",
+    )
+
+    assert load_excluded_names(exclude_path) == {"第五讲.docx", "第九讲.docx"}
+
+
+def test_stage_sermon_files_skips_excluded_files(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source"
+    first_group = source_dir / "初信者话语 视频转文本"
+    second_group = source_dir / "jsk牧师视频转文本 处理文件"
+    first_group.mkdir(parents=True)
+    second_group.mkdir(parents=True)
+
+    write_docx(first_group / "第一讲.docx", ["第一篇。"])
+    write_docx(first_group / "第五讲.docx", ["重复内容。"])
+    write_docx(second_group / "第九讲.docx", ["重复内容。"])
+    write_docx(second_group / "第二讲.docx", ["第二篇。"])
+
+    exclude_path = tmp_path / "sermon_excluded_files.txt"
+    exclude_path.write_text("第五讲.docx\n第九讲.docx\n", encoding="utf-8")
+
+    target_dir = tmp_path / "target"
+    stage_sermon_files(source_dir, target_dir, exclude_path=exclude_path)
+
+    paths = sorted(path.name for path in target_dir.iterdir())
+    assert paths == ["第一讲.docx", "第二讲.docx"]

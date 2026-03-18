@@ -20,6 +20,7 @@ DEFAULT_SOURCE_DIR = ROOT_DIR / "sermon处理文档"
 DEFAULT_TARGET_DIR = ROOT_DIR / "data" / "raw" / "sermons"
 DEFAULT_QUESTIONS_FILE = ROOT_DIR / "data" / "eval" / "sermon_questions.csv"
 DEFAULT_DOC_INDEX = ROOT_DIR / "data" / "eval" / "sermon_doc_index.csv"
+DEFAULT_EXCLUDE_FILE = ROOT_DIR / "data" / "eval" / "sermon_excluded_files.txt"
 
 
 def resolve_cli_path(path: str, follow_links: bool = True) -> Path:
@@ -31,15 +32,32 @@ def resolve_cli_path(path: str, follow_links: bool = True) -> Path:
     return value
 
 
-def pick_source_files(source_dir: Path) -> list[Path]:
+def load_excluded_names(path: Path) -> set[str]:
+    if not path.exists():
+        return set()
+
+    names = set()
+    with open(path, "r", encoding="utf-8") as f:
+        for line in f:
+            value = line.strip()
+            if not value or value.startswith("#"):
+                continue
+            names.add(value)
+    return names
+
+
+def pick_source_files(source_dir: Path, excluded_names: set[str] | None = None) -> list[Path]:
     if not source_dir.exists():
         raise FileNotFoundError(f"source dir not found: {source_dir}")
 
+    blocked = excluded_names or set()
     files = []
     for path in source_dir.rglob("*.docx"):
         if path.name.startswith("."):
             continue
         if "视频转文本" not in str(path.parent):
+            continue
+        if path.name in blocked:
             continue
         files.append(path)
 
@@ -68,8 +86,13 @@ def make_target_name(source_path: Path, used_names: set[str]) -> str:
     return picked
 
 
-def stage_sermon_files(source_dir: Path, target_dir: Path) -> None:
-    source_files = pick_source_files(source_dir)
+def stage_sermon_files(
+    source_dir: Path,
+    target_dir: Path,
+    exclude_path: Path | None = None,
+) -> None:
+    excluded_names = load_excluded_names(exclude_path) if exclude_path else set()
+    source_files = pick_source_files(source_dir, excluded_names=excluded_names)
     target_dir.parent.mkdir(parents=True, exist_ok=True)
 
     if target_dir.is_symlink():
@@ -125,6 +148,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--target-dir", default=str(DEFAULT_TARGET_DIR))
     parser.add_argument("--questions-path", default=str(DEFAULT_QUESTIONS_FILE))
     parser.add_argument("--doc-index-path", default=str(DEFAULT_DOC_INDEX))
+    parser.add_argument("--exclude-path", default=str(DEFAULT_EXCLUDE_FILE))
     return parser.parse_args()
 
 
@@ -134,14 +158,16 @@ def main() -> None:
     target_dir = resolve_cli_path(args.target_dir, follow_links=False)
     questions_path = resolve_cli_path(args.questions_path)
     doc_index_path = resolve_cli_path(args.doc_index_path)
+    exclude_path = resolve_cli_path(args.exclude_path)
 
-    stage_sermon_files(source_dir, target_dir)
+    stage_sermon_files(source_dir, target_dir, exclude_path=exclude_path)
     docs = load_sermon_documents(target_dir)
     write_question_template(questions_path)
     write_doc_index(doc_index_path, docs)
 
     print(f"linked sermon source: {target_dir}")
     print(f"sermon docs found: {len(docs)}")
+    print(f"excluded file list: {exclude_path}")
     print(f"question template ready: {questions_path}")
     print(f"doc index ready: {doc_index_path}")
 

@@ -156,12 +156,16 @@ The sermon extension is local, personal data. So before pretending there is a fi
 
 This keeps the extension real. The code can already load the transcript files and run through the same experiment runner once the labels exist. I do not want to fabricate question-answer pairs just to say Phase B is complete.
 
+Later I added one more explicit rule here: default sermon staging also reads [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt). That file is just a small tracked list of confirmed duplicate transcript filenames. It keeps the default corpus honest without hiding data-cleanup logic inside the loader or deleting the original local source files.
+
 ## What I Would Change Next
 
 - finish the sermon question labels now that the transcript files are staged into `data/raw/sermons/`
 - run the same eval loop on the sermon config and compare where HotpotQA trends do or do not transfer
+- keep duplicate-file cleanup explicit at staging time instead of doing automatic near-duplicate filtering inside the loader, because that is easier to explain and safer to debug
 - keep the sermon doc-level reranking ideas as opt-in studies for now, because hard doc dedupe helped dense recall but hurt BM25 / hybrid, and even after fixing the soft `doc_repeat_penalty` tie-break the gain is still sermon-specific
 - keep the new title-aware chunk text as a sermon retrieval study rather than a global default, because it helps multilingual dense retrieval a lot but hurts BM25 badly in the same dataset
 - keep the sermon metadata-aware rerank as a study too, because it is a small, explainable local heuristic that is still the best local path on the current 28 questions, but that is still too small and too sermon-specific to call a stable benchmark default
+- inspect the last remaining sermon miss before adding any more local heuristics, because after duplicate cleanup the error set is finally small enough to reason about one by one
 - add a more realistic answer metric later, either RAGAS or a small generated-answer path
 - compare FAISS vs ChromaDB more broadly after the first real smoke run, which now works through `configs/sermon_chromadb_ragas.yaml`
