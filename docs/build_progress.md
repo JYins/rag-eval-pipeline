@@ -2,18 +2,18 @@
 
 ## Current Step
 
-- Current repo status: Commit 9 finished
-- Next step: Commit 10
-- Next phase: add ci tests and final cleanup
+- Current repo status: Commit 10 in progress
+- Next step: final verification + commit
+- Next phase: stop after Phase A cleanup, do not start sermons yet
 
 ## Last Step
 
-- Commit 9 finished
-- Cleaned README in [`README.md`](/Users/yinshi/Documents/breadrag/README.md)
-- Added design notes in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md)
-- Added failure analysis in [`results/failure_cases.md`](/Users/yinshi/Documents/breadrag/results/failure_cases.md)
-- Corrected the standard eval config to use `500` samples by default
-- Verified with `python scripts/run_eval.py --config configs/default.yaml`
+- Commit 10 work started
+- Added GitHub Actions workflow in [`.github/workflows/ci.yml`](/Users/yinshi/Documents/breadrag/.github/workflows/ci.yml)
+- Cleaned README CI status and documented dense model download requirement
+- Improved dense model load failure message in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py)
+- Verified tests with `./.venv/bin/pytest -q`
+- Verified current environment cannot run dense eval without network or cached models
 
 ## History
 

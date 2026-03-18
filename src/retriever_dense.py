@@ -36,7 +36,13 @@ def load_encoder(model_name: str) -> Any:
             "sentence-transformers is required for dense retrieval. Install requirements first."
         ) from exc
 
-    return sentence_transformers.SentenceTransformer(EMBEDDING_MODELS[model_name])
+    try:
+        return sentence_transformers.SentenceTransformer(EMBEDDING_MODELS[model_name])
+    except Exception as exc:
+        raise RuntimeError(
+            "failed to load dense embedding model. "
+            "Make sure the model is cached locally or the machine can reach Hugging Face."
+        ) from exc
 
 
 class DenseRetriever:

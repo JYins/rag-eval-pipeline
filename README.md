@@ -1,6 +1,6 @@
 # RAG Evaluation Pipeline
 
-![CI status](https://img.shields.io/badge/CI-not%20set%20up%20yet-lightgrey)
+![CI status](https://img.shields.io/badge/CI-GitHub%20Actions%20configured-brightgreen)
 
 A config-driven evaluation framework for RAG retrieval systems, benchmarked first on HotpotQA and later planned for Chinese sermon transcripts. I built this because I wanted something small but actually runnable, where I can compare chunking and retrieval choices clearly instead of just wiring up a chatbot and hoping the retrieval is good enough.
 
@@ -119,6 +119,7 @@ python scripts/run_eval.py --config configs/default.yaml
 ```
 
 This is the standard run and now uses `500` HotpotQA samples by default.
+The dense and hybrid configs will load `sentence-transformers` models, so the first run needs network access or a local Hugging Face cache.
 
 For a quick debug run:
 
@@ -222,13 +223,13 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - The default experiment currently compares retrieval modes on sentence-based chunking first; the wider chunking comparison still needs to be expanded in config
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
-- No GitHub Actions CI yet, so the badge is still a placeholder
+- CI is now checked in with GitHub Actions for `ruff` + `pytest`
 
 ## Future Work
 
 - Expand the standard experiment grid to compare all 3 chunking strategies directly
 - Run and document the second embedding model on the same 500-sample setup
-- Add GitHub Actions CI and final cleanup
+- Extend CI if needed with result-generation smoke checks after model caching is set up
 - Extend the same framework to Chinese sermon transcripts
 - Add optional RAGAS-based answer evaluation
 - Compare more embedding models if the simple baseline stays stable
