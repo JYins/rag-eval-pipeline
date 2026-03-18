@@ -131,6 +131,11 @@ python scripts/run_eval.py --config configs/default.yaml
 
 This is the standard run and uses `500` HotpotQA samples by default.
 The dense and hybrid configs will load `sentence-transformers` models, so the first run needs network access or a local Hugging Face cache.
+If you only want a local sanity check in an offline environment, you can keep the run going and mark unavailable configs as skipped:
+
+```bash
+python scripts/run_eval.py --config configs/default.yaml --limit 20 --skip-unavailable
+```
 
 For a quick debug run:
 

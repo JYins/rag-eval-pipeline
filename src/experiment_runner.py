@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from itertools import product
+from traceback import format_exception_only
 from typing import Any
 
 from src.answer_quality import (
@@ -117,6 +118,11 @@ def get_encoder_cache(experiments: list[dict[str, Any]]) -> dict[str, Any]:
         if model_name not in cache:
             cache[model_name] = load_encoder(model_name)
     return cache
+
+
+def format_error(exc: Exception) -> str:
+    message = "".join(format_exception_only(type(exc), exc)).strip()
+    return " ".join(message.split())
 
 
 def use_ragas(config: dict[str, Any]) -> bool:
@@ -255,17 +261,39 @@ def run_experiment(
     return summary, query_rows
 
 
-def run_eval(config_path: str, limit_override: int | None = None) -> dict[str, Any]:
+def run_eval(
+    config_path: str,
+    limit_override: int | None = None,
+    skip_unavailable: bool = False,
+) -> dict[str, Any]:
     payload = load_experiments(config_path)
     rows = get_rows(payload["dataset"], limit_override=limit_override)
-    encoder_cache = get_encoder_cache(payload["experiments"])
 
     summary_rows = []
     per_query_rows = []
     for config in payload["experiments"]:
-        summary, query_rows = run_experiment(rows, config, encoder_cache)
-        summary_rows.append(summary)
-        per_query_rows.extend(query_rows)
+        try:
+            encoder_cache = get_encoder_cache([config])
+            summary, query_rows = run_experiment(rows, config, encoder_cache)
+            summary_rows.append(summary)
+            per_query_rows.extend(query_rows)
+        except Exception as exc:
+            if not skip_unavailable:
+                raise
+
+            summary_rows.append(
+                {
+                    "config_name": config["name"],
+                    "retrieval_mode": config["retrieval_mode"],
+                    "chunk_strategy": config.get("chunking", {}).get("strategy", "sentence"),
+                    "top_k": int(config.get("top_k", 3)),
+                    "model_name": config.get("model_name", ""),
+                    "dense_backend": config.get("dense_backend", ""),
+                    "n_queries": len(rows),
+                    "status": "skipped",
+                    "error": format_error(exc),
+                }
+            )
 
     output = payload["output"]
     save_csv(summary_rows, output.get("metrics_path", "results/metrics_summary.csv"))

@@ -19,17 +19,29 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run retrieval eval from YAML config")
     parser.add_argument("--config", default="configs/default.yaml")
     parser.add_argument("--limit", type=int, default=None)
+    parser.add_argument(
+        "--skip-unavailable",
+        action="store_true",
+        help="Skip configs that need unavailable local models or optional packages",
+    )
     return parser.parse_args()
 
 
 def main() -> None:
     args = parse_args()
-    result = run_eval(args.config, limit_override=args.limit)
+    result = run_eval(
+        args.config,
+        limit_override=args.limit,
+        skip_unavailable=args.skip_unavailable,
+    )
 
     print(f"saved metrics summary: {result['metrics_path']}")
     print(f"saved per-query results: {result['per_query_path']}")
     print("configs run:")
     for row in result["summary_rows"]:
+        if row.get("status") == "skipped":
+            print(f"- {row['config_name']}: SKIPPED {row['error']}")
+            continue
         parts = [
             f"- {row['config_name']}:",
             f"Recall@3={row['recall@3']:.4f}",

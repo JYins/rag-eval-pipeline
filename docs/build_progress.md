@@ -4,16 +4,24 @@
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
 - Next step: install the missing local `chromadb` / `ragas` packages in the venv and run one real comparison config with those switches turned on
+- Small fix this round: added an opt-in offline/debug mode so `scripts/run_eval.py` can keep BM25 runs going and mark dense or optional-package failures as `skipped` instead of crashing the whole batch
 - Next phase: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
 
 ## Last Step
+
+- Added `--skip-unavailable` to [`scripts/run_eval.py`](/Users/yinshi/Documents/breadrag/scripts/run_eval.py) and skip reporting in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
+- Kept the default path fail-loud, but now offline debug runs can still export `metrics_summary.csv` with explicit `status=skipped` rows
+- Added coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for skipped experiment reporting
+- Verified locally with `34` passing tests, clean `ruff`, and a debug eval run that writes BM25 results plus skipped dense/hybrid rows
+
+## Previous Step
 
 - Added an optional `dense_backend` switch in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py) and [`src/retriever_hybrid.py`](/Users/yinshi/Documents/breadrag/src/retriever_hybrid.py) so dense search can use FAISS or ChromaDB
 - Added optional `ragas_context_recall` scoring in [`src/answer_quality.py`](/Users/yinshi/Documents/breadrag/src/answer_quality.py) and [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
 - Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md) so the documented stack now matches the runnable code path
 - Verified locally with `32` passing tests and clean `ruff` output
 
-## Previous Step
+## Earlier Step
 
 - Restored dense and hybrid sermon runs in [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) with the multilingual MiniLM model
 - Added a dataset preset switch in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can jump between HotpotQA and sermon artifacts
