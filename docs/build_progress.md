@@ -2,11 +2,18 @@
 
 ## Current Step
 
-- Current repo status: HotpotQA Phase A is documented through the full 15-config run
-- Next step: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
-- Next phase: expand the sermon eval set toward the full 20-50 question target
+- Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
+- Next step: install the missing local `chromadb` / `ragas` packages in the venv and run one real comparison config with those switches turned on
+- Next phase: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
 
 ## Last Step
+
+- Added an optional `dense_backend` switch in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py) and [`src/retriever_hybrid.py`](/Users/yinshi/Documents/breadrag/src/retriever_hybrid.py) so dense search can use FAISS or ChromaDB
+- Added optional `ragas_context_recall` scoring in [`src/answer_quality.py`](/Users/yinshi/Documents/breadrag/src/answer_quality.py) and [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
+- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md) so the documented stack now matches the runnable code path
+- Verified locally with `32` passing tests and clean `ruff` output
+
+## Previous Step
 
 - Restored dense and hybrid sermon runs in [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) with the multilingual MiniLM model
 - Added a dataset preset switch in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can jump between HotpotQA and sermon artifacts

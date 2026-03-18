@@ -1,4 +1,11 @@
-from src.answer_quality import mean_answer_scores, score_answer_overlap
+import sys
+from types import SimpleNamespace
+
+from src.answer_quality import (
+    mean_answer_scores,
+    score_answer_overlap,
+    score_ragas_context_recall,
+)
 from src.eval_metrics import (
     get_gold_doc_ids,
     hit_rate_at_k,
@@ -80,6 +87,18 @@ def test_answer_overlap_scores_token_match() -> None:
     assert scores["keyword_hit"] == 1.0
 
 
+def test_answer_overlap_handles_cjk_text() -> None:
+    scores = score_answer_overlap(
+        predicted="这篇讲道强调盼望喜乐与平安",
+        gold="盼望喜乐与平安",
+    )
+
+    assert scores["precision"] > 0.0
+    assert scores["recall"] == 1.0
+    assert scores["f1"] > 0.0
+    assert scores["keyword_hit"] == 1.0
+
+
 def test_mean_answer_scores_averages_rows() -> None:
     summary = mean_answer_scores(
         [
@@ -91,3 +110,34 @@ def test_mean_answer_scores_averages_rows() -> None:
     assert summary["precision"] == 0.75
     assert summary["recall"] == 0.75
     assert summary["keyword_hit"] == 0.5
+
+
+def test_score_ragas_context_recall_uses_id_metric(monkeypatch) -> None:
+    class FakeSingleTurnSample:
+        def __init__(self, retrieved_context_ids, reference_context_ids):
+            self.retrieved_context_ids = retrieved_context_ids
+            self.reference_context_ids = reference_context_ids
+
+    class FakeIDBasedContextRecall:
+        async def single_turn_ascore(self, sample):
+            gold = set(sample.reference_context_ids)
+            picked = set(sample.retrieved_context_ids)
+            return len(gold & picked) / len(gold)
+
+    monkeypatch.setitem(
+        sys.modules,
+        "ragas.dataset_schema",
+        SimpleNamespace(SingleTurnSample=FakeSingleTurnSample),
+    )
+    monkeypatch.setitem(
+        sys.modules,
+        "ragas.metrics",
+        SimpleNamespace(IDBasedContextRecall=FakeIDBasedContextRecall),
+    )
+
+    scores = score_ragas_context_recall(
+        retrieved_ids=["doc_a", "doc_x", "doc_b"],
+        gold_doc_ids={"doc_a", "doc_b"},
+    )
+
+    assert scores["ragas_context_recall"] == 1.0

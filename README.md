@@ -18,9 +18,11 @@ The HotpotQA path is already runnable end to end: data loading, cleaning, chunki
 - Preserves chunk metadata like `doc_id`, `chunk_id`, and `source`
 - Runs sparse retrieval with BM25
 - Runs dense retrieval with `sentence-transformers` and FAISS
+- Can switch dense indexing between FAISS and ChromaDB
 - Runs hybrid retrieval with simple weighted rank fusion
 - Supports 2 main HotpotQA embedding models and a second local sermon dataset path
-- Computes `Recall@1`, `Recall@3`, `Recall@5`, `MRR`, `Hit Rate`, and a simple answer overlap proxy
+- Computes `Recall@1`, `Recall@3`, `Recall@5`, `MRR`, `Hit Rate`, and a simple answer overlap proxy for both English and Chinese text
+- Can optionally add a RAGAS id-based context recall metric in the eval output
 - Runs config-driven experiments and exports summary + per-query results
 - Includes a Streamlit dashboard for cross-config inspection
 - Adds a second dataset path for Chinese sermon transcripts with local file staging and labeled eval questions
@@ -190,6 +192,23 @@ Current setup:
 - `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval on HotpotQA
 - `configs/sermon.yaml` compares sparse, dense, and hybrid retrieval on the labeled sermon questions
 - `--limit` can override dataset size for fast local debugging
+- Dense configs can set `dense_backend: faiss` or `dense_backend: chromadb`
+- Any experiment can set `answer_quality.use_ragas: true` to add the optional `ragas_context_recall` column
+
+Example dense config slice with the optional backends:
+
+```yaml
+- name: dense_sentence_top3_chromadb
+  retrieval_mode: dense
+  model_name: all-MiniLM-L6-v2
+  dense_backend: chromadb
+  top_k: 3
+  answer_quality:
+    use_ragas: true
+  chunking:
+    strategy: sentence
+    max_sentences: 2
+```
 
 ## Metrics & Results
 
@@ -201,6 +220,8 @@ The main evaluation metrics in this repo are:
 - `MRR`
 - `Hit Rate`
 - answer-quality proxy based on token overlap / keyword hit
+  For English it uses word overlap, and for Chinese it uses simple CJK character overlap so the sermon metrics stay readable.
+- optional `ragas_context_recall` based on retrieved doc ids vs gold doc ids
 
 Current run artifacts:
 
@@ -273,6 +294,7 @@ I kept the design simple on purpose.
 - BM25 gives a strong sparse baseline with very little machinery
 - Dense retrieval with FAISS is the next simplest reasonable step for semantic search
 - Hybrid retrieval is simple enough to add, but still useful for checking multi-hop coverage
+- FAISS stays the default dense path because it is the lightest local baseline, but the same retriever can now swap to ChromaDB when I want to inspect a second vector store
 - The standard eval config now uses `500` samples, while `--limit` is reserved for debug runs only
 - In the full 15-config benchmark, paragraph chunking gave the strongest average retrieval quality while hybrid gave the best average coverage
 - The sermon path stages real local transcripts first, then uses a small manually labeled eval set instead of pretending benchmark labels already exist
@@ -283,7 +305,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 - The sermon eval set is still small at 21 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
-- `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
+- The optional ChromaDB and RAGAS paths are now wired, but I have not re-run the published benchmark tables with those options yet
 - The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
 
 ## Future Work
@@ -292,7 +314,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
-- Add optional RAGAS-based answer evaluation
+- Add a stronger RAGAS answer metric beyond the current id-based context recall hook
 - Compare more embedding models if the simple baseline stays stable
 
 ## License

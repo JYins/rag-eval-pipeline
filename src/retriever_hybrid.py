@@ -79,13 +79,19 @@ def build_hybrid_retriever(
     strategy: str = "sentence",
     model_name: str = "all-MiniLM-L6-v2",
     encoder: Any | None = None,
+    dense_backend: str = "faiss",
     bm25_weight: float = 0.5,
     dense_weight: float = 0.5,
     **chunk_kwargs: Any,
 ) -> HybridRetriever:
     chunks = chunk_docs(docs, strategy=strategy, **chunk_kwargs)
     bm25_retriever = BM25Retriever(chunks)
-    dense_retriever = DenseRetriever(chunks, model_name=model_name, encoder=encoder)
+    dense_retriever = DenseRetriever(
+        chunks,
+        model_name=model_name,
+        encoder=encoder,
+        backend=dense_backend,
+    )
     return HybridRetriever(
         bm25_retriever=bm25_retriever,
         dense_retriever=dense_retriever,

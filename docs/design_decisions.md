@@ -46,6 +46,17 @@ The retrieval path is layered in the most natural order:
 
 This is the simplest reasonable stack that still supports the resume claim directly.
 
+## Why FAISS First, But ChromaDB Too
+
+FAISS is still the default dense backend because it is the lightest local baseline and very easy to explain. One encoder, one matrix of embeddings, one index.
+
+But the resume stack also names ChromaDB, so I added a second dense backend switch instead of leaving `chromadb` as a dead dependency.
+
+- `dense_backend: faiss` is the default path for the benchmark runs
+- `dense_backend: chromadb` uses the same chunk embeddings through an in-memory Chroma collection
+
+This keeps the experiment runner simple. I can compare vector store behavior without changing the rest of the eval pipeline.
+
 ## Why Only Two Main HotpotQA Embedding Models
 
 The main HotpotQA comparison supports:
@@ -72,6 +83,18 @@ I kept it this way because:
 - it avoids pretending I already have a polished answer generator
 
 RAGAS can come later, but I want the retrieval comparison stable first.
+
+## Why the RAGAS Hook Is Optional
+
+I do not want the base pipeline to depend on a heavier metric stack for every local run. So the default path still uses the overlap proxy.
+
+At the same time, I wanted the repo to honestly support the `RAGAS` line on the resume. The compromise is:
+
+- default runs keep the cheap overlap metric
+- configs can opt into `answer_quality.use_ragas: true`
+- the current RAGAS hook uses `IDBasedContextRecall`, which fits this repo well because HotpotQA and the sermon labels both have gold document ids
+
+This is still modest, but it is real and runnable.
 
 ## Trade-Offs From the Current 500-Sample Full Grid
 
@@ -138,4 +161,4 @@ This keeps the extension real. The code can already load the transcript files an
 - finish the sermon question labels now that the transcript files are staged into `data/raw/sermons/`
 - run the same eval loop on the sermon config and compare where HotpotQA trends do or do not transfer
 - add a more realistic answer metric later, either RAGAS or a small generated-answer path
-- decide whether `chromadb` should stay as a dependency or be wired in for a second dense-storage backend
+- compare FAISS vs ChromaDB on the same dense configs once the extra dependency is installed in the local env

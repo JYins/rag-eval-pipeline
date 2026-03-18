@@ -18,7 +18,12 @@ if str(ROOT_DIR) not in sys.path:
 
 from src.chunking import chunk_docs
 from src.data_loader import load_hotpot_subset
-from src.indexing import build_faiss_index, search_index
+from src.indexing import (
+    build_chroma_collection,
+    build_faiss_index,
+    search_chroma_collection,
+    search_index,
+)
 
 
 EMBEDDING_MODELS = {
@@ -56,34 +61,68 @@ class DenseRetriever:
         chunks: list[dict[str, Any]],
         model_name: str = "all-MiniLM-L6-v2",
         encoder: Any | None = None,
+        backend: str = "faiss",
+        collection_name: str | None = None,
     ):
         if not chunks:
             raise ValueError("chunks should not be empty")
 
         self.chunks = chunks
+        self.chunk_map = {chunk["chunk_id"]: chunk for chunk in chunks}
         self.model_name = model_name
         self.encoder = encoder or load_encoder(model_name)
+        self.backend = backend
         texts = [chunk["text"] for chunk in chunks]
         self.vectors = self.encode_texts(texts)
-        self.index = build_faiss_index(self.vectors)
+        self.index = self.build_index(collection_name=collection_name)
 
     def encode_texts(self, texts: list[str]) -> np.ndarray:
         vectors = self.encoder.encode(texts, convert_to_numpy=True)
         return np.asarray(vectors, dtype="float32")
+
+    def build_index(self, collection_name: str | None = None) -> Any:
+        if self.backend == "faiss":
+            return build_faiss_index(self.vectors)
+        if self.backend == "chromadb":
+            return build_chroma_collection(
+                self.vectors,
+                self.chunks,
+                collection_name=collection_name,
+            )
+        raise ValueError(f"unknown dense backend: {self.backend}")
 
     def search(self, query: str, top_k: int = 5) -> list[dict[str, Any]]:
         if top_k <= 0:
             raise ValueError("top_k should be > 0")
 
         query_vector = self.encode_texts([query])
-        scores, ids = search_index(self.index, query_vector, top_k=top_k)
+        if self.backend == "faiss":
+            scores, ids = search_index(self.index, query_vector, top_k=top_k)
 
+            results = []
+            for rank, (index, score) in enumerate(zip(ids[0], scores[0]), start=1):
+                chunk = dict(self.chunks[int(index)])
+                chunk["score"] = float(score)
+                chunk["rank"] = rank
+                results.append(chunk)
+            return results
+
+        payload = search_chroma_collection(self.index, query_vector, top_k=top_k)
         results = []
-        for rank, (index, score) in enumerate(zip(ids[0], scores[0]), start=1):
-            chunk = dict(self.chunks[int(index)])
-            chunk["score"] = float(score)
-            chunk["rank"] = rank
-            results.append(chunk)
+        documents = payload["documents"][0]
+        metadatas = payload["metadatas"][0]
+        distances = payload["distances"][0]
+
+        for rank, (text, metadata, distance) in enumerate(
+            zip(documents, metadatas, distances),
+            start=1,
+        ):
+            chunk = self.chunk_map[metadata["chunk_id"]]
+            row = dict(chunk)
+            row["text"] = text
+            row["score"] = float(1.0 - distance)
+            row["rank"] = rank
+            results.append(row)
         return results
 
 
@@ -92,10 +131,16 @@ def build_dense_retriever(
     strategy: str = "sentence",
     model_name: str = "all-MiniLM-L6-v2",
     encoder: Any | None = None,
+    backend: str = "faiss",
     **chunk_kwargs: Any,
 ) -> DenseRetriever:
     chunks = chunk_docs(docs, strategy=strategy, **chunk_kwargs)
-    return DenseRetriever(chunks, model_name=model_name, encoder=encoder)
+    return DenseRetriever(
+        chunks,
+        model_name=model_name,
+        encoder=encoder,
+        backend=backend,
+    )
 
 
 def parse_args() -> argparse.Namespace:
@@ -104,6 +149,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--strategy", default="sentence")
     parser.add_argument("--model-name", default="all-MiniLM-L6-v2")
+    parser.add_argument("--backend", default="faiss")
     parser.add_argument("--max-sentences", type=int, default=2)
     return parser.parse_args()
 
@@ -121,12 +167,14 @@ def main() -> None:
         row["documents"],
         strategy=args.strategy,
         model_name=args.model_name,
+        backend=args.backend,
         **chunk_kwargs,
     )
     results = retriever.search(row["question"], top_k=args.top_k)
 
     print(f"question: {row['question']}")
     print(f"model: {retriever.model_name}")
+    print(f"backend: {retriever.backend}")
     for item in results:
         print(
             f"rank={item['rank']} score={item['score']:.4f} "

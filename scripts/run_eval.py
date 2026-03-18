@@ -30,12 +30,17 @@ def main() -> None:
     print(f"saved per-query results: {result['per_query_path']}")
     print("configs run:")
     for row in result["summary_rows"]:
-        print(
-            f"- {row['config_name']}: "
-            f"Recall@3={row['recall@3']:.4f} "
-            f"MRR={row['mrr']:.4f} "
-            f"HitRate={row['hit_rate']:.4f}"
-        )
+        parts = [
+            f"- {row['config_name']}:",
+            f"Recall@3={row['recall@3']:.4f}",
+            f"MRR={row['mrr']:.4f}",
+            f"HitRate={row['hit_rate']:.4f}",
+        ]
+        if row.get("dense_backend"):
+            parts.append(f"Backend={row['dense_backend']}")
+        if "ragas_context_recall" in row:
+            parts.append(f"RAGASContextRecall={row['ragas_context_recall']:.4f}")
+        print(" ".join(parts))
 
 
 if __name__ == "__main__":

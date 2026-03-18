@@ -101,6 +101,47 @@ def install_fake_faiss(monkeypatch) -> None:
     monkeypatch.setitem(sys.modules, "faiss", fake_module)
 
 
+class FakeChromaCollection:
+    def __init__(self):
+        self.rows = []
+
+    def add(self, ids, documents, metadatas, embeddings) -> None:
+        for item in zip(ids, documents, metadatas, embeddings):
+            row_id, text, metadata, vector = item
+            self.rows.append(
+                {
+                    "id": row_id,
+                    "text": text,
+                    "metadata": metadata,
+                    "vector": np.asarray(vector, dtype="float32"),
+                }
+            )
+
+    def query(self, query_embeddings, n_results, include):
+        query = np.asarray(query_embeddings[0], dtype="float32")
+        rows = []
+        for row in self.rows:
+            score = float(query @ row["vector"])
+            rows.append((score, row))
+        rows.sort(key=lambda item: item[0], reverse=True)
+        picked = rows[:n_results]
+        return {
+            "documents": [[item[1]["text"] for item in picked]],
+            "metadatas": [[item[1]["metadata"] for item in picked]],
+            "distances": [[1.0 - item[0] for item in picked]],
+        }
+
+
+class FakeChromaClient:
+    def get_or_create_collection(self, name: str):
+        return FakeChromaCollection()
+
+
+def install_fake_chromadb(monkeypatch) -> None:
+    fake_module = SimpleNamespace(Client=lambda: FakeChromaClient())
+    monkeypatch.setitem(sys.modules, "chromadb", fake_module)
+
+
 def test_dense_search_returns_most_similar_chunk(monkeypatch) -> None:
     install_fake_faiss(monkeypatch)
 
@@ -153,6 +194,24 @@ def test_build_dense_retriever_from_docs_uses_chunking(monkeypatch) -> None:
     assert len(retriever.chunks) == 3
     assert results[0]["doc_id"] == "doc_1"
     assert "diplomat" in results[0]["text"].lower()
+
+
+def test_dense_search_supports_chromadb_backend(monkeypatch) -> None:
+    install_fake_chromadb(monkeypatch)
+
+    chunks = [
+        {"chunk_id": "c1", "doc_id": "a", "source": "unit-test", "text": "apple banana fruit market"},
+        {"chunk_id": "c2", "doc_id": "b", "source": "unit-test", "text": "basketball team wins playoff game"},
+        {"chunk_id": "c3", "doc_id": "c", "source": "unit-test", "text": "apple diplomat speech"},
+    ]
+
+    retriever = DenseRetriever(chunks, encoder=FakeEncoder(), backend="chromadb")
+    results = retriever.search("apple banana", top_k=2)
+
+    assert len(results) == 2
+    assert results[0]["chunk_id"] == "c1"
+    assert results[0]["rank"] == 1
+    assert results[0]["score"] >= results[1]["score"]
 
 
 class StubRetriever:

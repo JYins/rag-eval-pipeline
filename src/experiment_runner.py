@@ -6,7 +6,11 @@ from copy import deepcopy
 from itertools import product
 from typing import Any
 
-from src.answer_quality import mean_answer_scores, score_answer_overlap
+from src.answer_quality import (
+    mean_answer_scores,
+    score_answer_overlap,
+    score_ragas_context_recall,
+)
 from src.data_loader import load_hotpot_subset
 from src.data_loader_sermon import build_sermon_rows
 from src.eval_metrics import get_gold_doc_ids, mean_metrics, score_query
@@ -40,6 +44,8 @@ def build_experiment_name(config: dict[str, Any]) -> str:
     ]
     if config.get("model_name"):
         parts.append(str(config["model_name"]).split("/")[-1])
+    if config.get("dense_backend") and config["dense_backend"] != "faiss":
+        parts.append(str(config["dense_backend"]))
     return "_".join(parts)
 
 
@@ -113,6 +119,11 @@ def get_encoder_cache(experiments: list[dict[str, Any]]) -> dict[str, Any]:
     return cache
 
 
+def use_ragas(config: dict[str, Any]) -> bool:
+    answer_quality = config.get("answer_quality", {})
+    return bool(answer_quality.get("use_ragas", False))
+
+
 def build_retriever(
     docs: list[dict[str, Any]],
     config: dict[str, Any],
@@ -131,6 +142,7 @@ def build_retriever(
             strategy=strategy,
             model_name=model_name,
             encoder=encoder_cache[model_name],
+            backend=str(config.get("dense_backend", "faiss")),
             **kwargs,
         )
     if mode == "hybrid":
@@ -140,6 +152,7 @@ def build_retriever(
             strategy=strategy,
             model_name=model_name,
             encoder=encoder_cache[model_name],
+            dense_backend=str(config.get("dense_backend", "faiss")),
             bm25_weight=float(config.get("bm25_weight", 0.5)),
             dense_weight=float(config.get("dense_weight", 0.5)),
             **kwargs,
@@ -186,6 +199,7 @@ def run_experiment(
     query_rows = []
     metric_rows = []
     answer_rows = []
+    ragas_rows = []
     retriever_cache: dict[tuple[tuple[str, str], ...], Any] = {}
 
     for row in rows:
@@ -200,9 +214,15 @@ def run_experiment(
         top_k = int(config.get("top_k", 3))
         context_text = " ".join(item["text"] for item in results[:top_k])
         answer_scores = score_answer_overlap(context_text, row["answer"])
+        ragas_scores = None
+        if use_ragas(config):
+            retrieved_ids = [item["doc_id"] for item in results[:top_k]]
+            ragas_scores = score_ragas_context_recall(retrieved_ids, gold_doc_ids)
 
         metric_rows.append(retrieval_scores)
         answer_rows.append(answer_scores)
+        if ragas_scores:
+            ragas_rows.append(ragas_scores)
         query_rows.append(
             {
                 "config_name": config["name"],
@@ -212,21 +232,25 @@ def run_experiment(
                 "gold_doc_ids": sorted(gold_doc_ids),
                 "retrieval_metrics": retrieval_scores,
                 "answer_quality": answer_scores,
+                "ragas_metrics": ragas_scores or {},
                 "results": trim_results(results),
             }
         )
 
     retrieval_summary = mean_metrics(metric_rows)
     answer_summary = mean_answer_scores(answer_rows)
+    ragas_summary = mean_metrics(ragas_rows) if ragas_rows else {}
     summary = {
         "config_name": config["name"],
         "retrieval_mode": config["retrieval_mode"],
         "chunk_strategy": config.get("chunking", {}).get("strategy", "sentence"),
         "top_k": int(config.get("top_k", 3)),
         "model_name": config.get("model_name", ""),
+        "dense_backend": config.get("dense_backend", ""),
         "n_queries": len(rows),
         **retrieval_summary,
         **answer_summary,
+        **ragas_summary,
     }
     return summary, query_rows
 
