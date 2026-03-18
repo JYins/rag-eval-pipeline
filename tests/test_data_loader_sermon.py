@@ -4,6 +4,7 @@ from pathlib import Path
 
 from docx import Document
 
+from scripts.prepare_sermon_data import stage_sermon_files
 from src.data_loader_sermon import build_sermon_rows, load_sermon_documents, parse_gold_doc_ids
 
 
@@ -63,3 +64,25 @@ def test_build_sermon_rows_uses_gold_doc_ids(tmp_path: Path) -> None:
 
 def test_parse_gold_doc_ids_splits_multiple_values() -> None:
     assert parse_gold_doc_ids("a;b|c") == ["a", "b", "c"]
+
+
+def test_stage_sermon_files_replaces_stale_links(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source"
+    first_group = source_dir / "初信者话语 视频转文本"
+    second_group = source_dir / "jsk牧师视频转文本 处理文件"
+    first_group.mkdir(parents=True)
+    second_group.mkdir(parents=True)
+
+    write_docx(first_group / "第一讲.docx", ["第一篇。"])
+    write_docx(second_group / "第二讲.docx", ["第二篇。"])
+
+    target_dir = tmp_path / "target"
+    target_dir.mkdir()
+    stale = target_dir / "旧文件.docx"
+    stale.symlink_to(first_group / "第一讲.docx")
+
+    stage_sermon_files(source_dir, target_dir)
+
+    paths = sorted(path.name for path in target_dir.iterdir())
+    assert "旧文件.docx" not in paths
+    assert len(paths) == 2

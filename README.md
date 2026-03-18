@@ -8,7 +8,7 @@ A config-driven evaluation framework for RAG retrieval systems, benchmarked on H
 
 I wanted to understand what really changes retrieval quality in a RAG pipeline. Different chunk sizes, sentence splits, BM25 vs dense retrieval, and different embedding models all look like small choices, but they can change results a lot. This repo focuses on evaluation and engineering clarity, not packaging everything into a shiny chatbot.
 
-The HotpotQA path is already runnable end to end: data loading, cleaning, chunking, sparse/dense/hybrid retrieval, metrics, result export, and a Streamlit dashboard. The sermon extension now has real transcript ingestion plus a labeling template, so the remaining work there is question annotation and running the same eval loop on the labeled set.
+The HotpotQA path is already runnable end to end: data loading, cleaning, chunking, sparse/dense/hybrid retrieval, metrics, result export, and a Streamlit dashboard. The sermon extension now also has a real labeled question set over local transcripts, so the same eval runner can be reused on a second dataset instead of stopping at a template.
 
 ## What It Does
 
@@ -19,11 +19,11 @@ The HotpotQA path is already runnable end to end: data loading, cleaning, chunki
 - Runs sparse retrieval with BM25
 - Runs dense retrieval with `sentence-transformers` and FAISS
 - Runs hybrid retrieval with simple weighted rank fusion
-- Supports 2 main HotpotQA embedding models plus a multilingual sermon option
+- Supports 2 main HotpotQA embedding models and a second local sermon dataset path
 - Computes `Recall@1`, `Recall@3`, `Recall@5`, `MRR`, `Hit Rate`, and a simple answer overlap proxy
 - Runs config-driven experiments and exports summary + per-query results
 - Includes a Streamlit dashboard for cross-config inspection
-- Adds a second dataset path for Chinese sermon transcripts with local file staging and question-label templates
+- Adds a second dataset path for Chinese sermon transcripts with local file staging and labeled eval questions
 
 ## Project Structure
 
@@ -148,7 +148,18 @@ streamlit run app/streamlit_app.py
 python scripts/prepare_sermon_data.py
 ```
 
-This stages the local transcript `.docx` files into `data/raw/sermons/`, creates a starter question file at `data/eval/sermon_questions.csv`, and writes a local doc index to `data/eval/sermon_doc_index.csv` for labeling help.
+This stages the local transcript `.docx` files into `data/raw/sermons/`, keeps the labeled question file at `data/eval/sermon_questions.csv`, and writes a local doc index to `data/eval/sermon_doc_index.csv` for checking doc ids.
+
+### 8. Run sermon eval
+
+```bash
+python scripts/run_eval.py --config configs/sermon.yaml
+```
+
+This runs the current sermon BM25 baseline on the labeled transcript questions and writes:
+
+- `results/sermon_metrics_summary.csv`
+- `results/sermon_per_query_results.json`
 
 ## Configuration
 
@@ -169,7 +180,7 @@ Current setup:
 
 - `configs/default.yaml` is the standard `500`-sample HotpotQA run
 - `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval on HotpotQA
-- `configs/sermon.yaml` is the Phase B entry point once `data/eval/sermon_questions.csv` has real labeled questions
+- `configs/sermon.yaml` is the current runnable Phase B baseline over the labeled sermon questions
 - `--limit` can override dataset size for fast local debugging
 
 ## Metrics & Results
@@ -188,6 +199,8 @@ Current run artifacts:
 - `results/metrics_summary.csv`
 - `results/per_query_results.json`
 - `results/failure_cases.md`
+- `results/sermon_metrics_summary.csv`
+- `results/sermon_per_query_results.json`
 
 Current 500-sample full-grid highlights:
 
@@ -246,20 +259,20 @@ I kept the design simple on purpose.
 - Hybrid retrieval is simple enough to add, but still useful for checking multi-hop coverage
 - The standard eval config now uses `500` samples, while `--limit` is reserved for debug runs only
 - In the full 15-config benchmark, paragraph chunking gave the strongest average retrieval quality while hybrid gave the best average coverage
-- The sermon path stages real local transcripts first, then expects manual labeling instead of pretending benchmark labels already exist
+- The sermon path stages real local transcripts first, then uses a small manually labeled eval set instead of pretending benchmark labels already exist
 
 More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md).
 
 ## Limitations
 
-- The sermon transcript files are staged, but `data/eval/sermon_questions.csv` still needs real labeled questions before Phase B metrics can run
+- The sermon eval currently runs as a BM25 baseline in this repo because the multilingual dense model is not bundled locally
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
-- The dashboard already works for any result file pair, but the sermon dashboard view will only be meaningful after the sermon eval artifacts exist
+- The dashboard already works for any result file pair, but there is not a separate sermon-only summary view yet
 
 ## Future Work
 
-- Finish 20-50 sermon question labels and run `configs/sermon.yaml`
+- Add a cached multilingual dense model option back into the sermon config
 - Add sermon results into the dashboard as a second dataset comparison view
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up

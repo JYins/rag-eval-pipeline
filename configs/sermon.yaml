@@ -15,21 +15,3 @@ experiments:
     chunking:
       strategy: sentence
       max_sentences: 2
-
-  - name: dense_sentence_top3_multilingual
-    retrieval_mode: dense
-    model_name: paraphrase-multilingual-MiniLM-L12-v2
-    top_k: 3
-    chunking:
-      strategy: sentence
-      max_sentences: 2
-
-  - name: hybrid_sentence_top3_multilingual
-    retrieval_mode: hybrid
-    model_name: paraphrase-multilingual-MiniLM-L12-v2
-    top_k: 3
-    bm25_weight: 0.5
-    dense_weight: 0.5
-    chunking:
-      strategy: sentence
-      max_sentences: 2

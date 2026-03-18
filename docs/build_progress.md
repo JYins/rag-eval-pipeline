@@ -3,16 +3,15 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A is documented through the full 15-config run
-- Next step: fill `data/eval/sermon_questions.csv` with real labeled questions and run `configs/sermon.yaml`
-- Next phase: Phase B eval on the staged sermon transcripts
+- Next step: run the labeled sermon baseline through the dashboard and inspect misses
+- Next phase: add a cached multilingual dense option back into the sermon config
 
 ## Last Step
 
-- Ran the full 15-config HotpotQA grid on 500 samples and folded the results back into the docs
-- Added [`src/data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/src/data_loader_sermon.py) for local sermon transcript loading
-- Added [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) to stage transcript `.docx` files into `data/raw/sermons/`
-- Added [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) and a starter [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv)
-- Verified sermon staging against the real local transcript files
+- Filled [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv) with 21 real labeled sermon questions
+- Kept [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) as a runnable local BM25 baseline in the current offline environment
+- Fixed [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so sermon staging stays idempotent instead of duplicating symlinked docs
+- Ran `python scripts/run_eval.py --config configs/sermon.yaml` and generated the sermon result artifacts locally
 
 ## History
 

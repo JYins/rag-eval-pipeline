@@ -76,12 +76,14 @@ def stage_sermon_files(source_dir: Path, target_dir: Path) -> None:
         target_dir.unlink()
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    used_names = {path.name for path in target_dir.iterdir()}
+    for path in target_dir.iterdir():
+        if path.is_symlink() or path.is_file():
+            path.unlink()
+
+    used_names: set[str] = set()
     for source_path in source_files:
         target_name = make_target_name(source_path, used_names)
         target_path = target_dir / target_name
-        if target_path.exists():
-            continue
         target_path.symlink_to(source_path)
 
 
