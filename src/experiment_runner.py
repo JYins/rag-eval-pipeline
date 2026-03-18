@@ -211,12 +211,20 @@ def rerank_results_with_doc_penalty(
         scored_rows.append(
             {
                 "effective_rank": float(item["rank"]) + penalty * seen_count,
+                "seen_count": seen_count,
                 "original_rank": int(item["rank"]),
                 "row": dict(item),
             }
         )
 
-    scored_rows.sort(key=lambda item: (item["effective_rank"], item["original_rank"]))
+    # if effective rank ties, prefer a new doc before another chunk from the same doc
+    scored_rows.sort(
+        key=lambda item: (
+            item["effective_rank"],
+            item["seen_count"],
+            item["original_rank"],
+        )
+    )
 
     picked = []
     for index, item in enumerate(scored_rows[:top_k], start=1):

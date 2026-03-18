@@ -72,7 +72,21 @@ def test_rerank_results_with_doc_penalty_softens_duplicates() -> None:
 
     picked = rerank_results_with_doc_penalty(results, top_k=4, penalty=2.0)
 
-    assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "a_2", "c_1"]
+    assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "c_1", "a_2"]
+    assert [item["rank"] for item in picked] == [1, 2, 3, 4]
+
+
+def test_rerank_results_with_doc_penalty_prefers_new_doc_on_tie() -> None:
+    results = [
+        {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
+        {"chunk_id": "b_1", "doc_id": "doc_b", "rank": 2, "text": "b1"},
+        {"chunk_id": "a_2", "doc_id": "doc_a", "rank": 3, "text": "a2"},
+        {"chunk_id": "c_1", "doc_id": "doc_c", "rank": 5, "text": "c1"},
+    ]
+
+    picked = rerank_results_with_doc_penalty(results, top_k=4, penalty=2.0)
+
+    assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "c_1", "a_2"]
     assert [item["rank"] for item in picked] == [1, 2, 3, 4]
 
 

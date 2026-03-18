@@ -3,16 +3,16 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: inspect sermon miss cases again and see whether chunk grouping or a smaller doc penalty can beat the current dense baseline
-- Small fix this round: added a softer `doc_repeat_penalty` rerank path plus a separate sermon study config so duplicate-sermon hits can be inspected without changing the main baseline
+- Next step: inspect sermon miss cases again and see whether chunk grouping can beat the current dense baseline without hard per-doc filtering
+- Small fix this round: adjusted the soft `doc_repeat_penalty` tie-break so a new doc wins when it ties a repeated doc on effective rank
 - Next phase: tighten the labeled questions where they are too easy or too noisy, then rerun the sermon comparison set
 
 ## Last Step
 
-- Added [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml) as a second opt-in sermon rerank study using `doc_repeat_penalty: 2.0`
-- Added the softer rerank hook in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py)
-- Exposed the study in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can switch to `Sermon (Doc Penalty Study)`
-- Verified the trade-off locally: the soft penalty was gentler than hard dedupe, but it still did not beat the main dense sermon baseline
+- Kept [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml) as the soft rerank study, but fixed the tie-break in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) so an unseen doc beats a repeated doc when their effective rank is the same
+- Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for the new tie case
+- Re-ran the sermon doc-penalty study and verified the dense result improved to Recall@3 `0.8095`, MRR `0.6984`, Hit Rate `0.8095`
+- Kept the feature experimental anyway, because the gain is still sermon-specific and BM25 / hybrid remain unchanged
 
 ## Previous Step
 
