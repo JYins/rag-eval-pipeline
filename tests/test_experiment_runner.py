@@ -1,5 +1,11 @@
 import src.experiment_runner as experiment_runner
-from src.experiment_runner import dedupe_results_by_doc_id, load_experiments, run_eval, run_experiment
+from src.experiment_runner import (
+    dedupe_results_by_doc_id,
+    load_experiments,
+    rerank_results_with_doc_penalty,
+    run_eval,
+    run_experiment,
+)
 
 
 def test_load_experiments_reads_sermon_bm25_config() -> None:
@@ -32,6 +38,16 @@ def test_load_experiments_reads_doc_dedup_config() -> None:
     assert payload["experiments"][2]["dedupe_docs"] is True
 
 
+def test_load_experiments_reads_doc_penalty_config() -> None:
+    payload = load_experiments("configs/sermon_doc_penalty.yaml")
+
+    assert payload["dataset"]["name"] == "sermon"
+    assert len(payload["experiments"]) == 3
+    assert payload["experiments"][0]["doc_repeat_penalty"] == 2.0
+    assert payload["experiments"][1]["doc_repeat_penalty"] == 2.0
+    assert payload["experiments"][2]["doc_repeat_penalty"] == 2.0
+
+
 def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
     results = [
         {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
@@ -44,6 +60,20 @@ def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
 
     assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "c_1"]
     assert [item["rank"] for item in picked] == [1, 2, 3]
+
+
+def test_rerank_results_with_doc_penalty_softens_duplicates() -> None:
+    results = [
+        {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
+        {"chunk_id": "a_2", "doc_id": "doc_a", "rank": 2, "text": "a2"},
+        {"chunk_id": "b_1", "doc_id": "doc_b", "rank": 3, "text": "b1"},
+        {"chunk_id": "c_1", "doc_id": "doc_c", "rank": 4, "text": "c1"},
+    ]
+
+    picked = rerank_results_with_doc_penalty(results, top_k=4, penalty=2.0)
+
+    assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "a_2", "c_1"]
+    assert [item["rank"] for item in picked] == [1, 2, 3, 4]
 
 
 def test_run_experiment_reuses_retriever_for_same_docs(monkeypatch) -> None:

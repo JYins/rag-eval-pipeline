@@ -195,6 +195,37 @@ def dedupe_results_by_doc_id(results: list[dict[str, Any]], top_k: int) -> list[
     return picked
 
 
+def rerank_results_with_doc_penalty(
+    results: list[dict[str, Any]],
+    top_k: int,
+    penalty: float,
+) -> list[dict[str, Any]]:
+    if penalty < 0:
+        raise ValueError("penalty should be >= 0")
+
+    doc_counts: dict[str, int] = {}
+    scored_rows = []
+    for item in results:
+        seen_count = doc_counts.get(item["doc_id"], 0)
+        doc_counts[item["doc_id"]] = seen_count + 1
+        scored_rows.append(
+            {
+                "effective_rank": float(item["rank"]) + penalty * seen_count,
+                "original_rank": int(item["rank"]),
+                "row": dict(item),
+            }
+        )
+
+    scored_rows.sort(key=lambda item: (item["effective_rank"], item["original_rank"]))
+
+    picked = []
+    for index, item in enumerate(scored_rows[:top_k], start=1):
+        row = dict(item["row"])
+        row["rank"] = index
+        picked.append(row)
+    return picked
+
+
 def trim_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows = []
     for item in results:
@@ -238,6 +269,12 @@ def run_experiment(
         results = search_docs(retriever, row["question"], config)
         if config.get("dedupe_docs"):
             results = dedupe_results_by_doc_id(results, top_k=int(config.get("top_k", 3)))
+        elif "doc_repeat_penalty" in config:
+            results = rerank_results_with_doc_penalty(
+                results,
+                top_k=int(config.get("top_k", 3)),
+                penalty=float(config["doc_repeat_penalty"]),
+            )
         gold_doc_ids = get_gold_doc_ids(row)
         retrieval_scores = score_query(results, gold_doc_ids)
 

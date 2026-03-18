@@ -3,17 +3,22 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: inspect whether doc-level reranking or chunk grouping can keep the dense dedupe gain without hurting BM25 / hybrid hit rate
-- Small fix this round: added an opt-in offline/debug mode so `scripts/run_eval.py` can keep BM25 runs going and mark dense or optional-package failures as `skipped` instead of crashing the whole batch
-- Next phase: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
+- Next step: inspect sermon miss cases again and see whether chunk grouping or a smaller doc penalty can beat the current dense baseline
+- Small fix this round: added a softer `doc_repeat_penalty` rerank path plus a separate sermon study config so duplicate-sermon hits can be inspected without changing the main baseline
+- Next phase: tighten the labeled questions where they are too easy or too noisy, then rerun the sermon comparison set
 
 ## Last Step
+
+- Added [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml) as a second opt-in sermon rerank study using `doc_repeat_penalty: 2.0`
+- Added the softer rerank hook in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py)
+- Exposed the study in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can switch to `Sermon (Doc Penalty Study)`
+- Verified the trade-off locally: the soft penalty was gentler than hard dedupe, but it still did not beat the main dense sermon baseline
+
+## Previous Step
 
 - Added [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml) as a clean opt-in study for `dedupe_docs: true` instead of changing the main sermon baseline
 - Verified the trade-off locally: doc dedupe helped the dense sermon run's Recall@3, but it hurt BM25 and hybrid hit rate, so it stays experimental
 - Exposed the doc-dedupe study as another dashboard preset in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
-
-## Previous Step
 
 - Installed local `chromadb` and `ragas` into the project venv and verified the optional path with [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - Fixed [`src/indexing.py`](/Users/yinshi/Documents/breadrag/src/indexing.py) to batch Chroma inserts so larger chunk sets do not exceed ChromaDB's max batch size

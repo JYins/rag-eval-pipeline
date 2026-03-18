@@ -153,7 +153,7 @@ streamlit run app/streamlit_app.py
 ```
 
 Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
-It now includes extra presets for the optional `Sermon (Doc Dedupe Study)` and `Sermon (ChromaDB + RAGAS)` runs.
+It now includes extra presets for the optional `Sermon (Doc Dedupe Study)`, `Sermon (Doc Penalty Study)`, and `Sermon (ChromaDB + RAGAS)` runs.
 
 ### 7. Prepare sermon transcripts
 
@@ -205,6 +205,19 @@ This keeps the main sermon baseline untouched and writes a separate study output
 - `results/sermon_doc_dedup_metrics.csv`
 - `results/sermon_doc_dedup_per_query.json`
 
+### 11. Run the optional doc-penalty study
+
+```bash
+python scripts/run_eval.py --config configs/sermon_doc_penalty.yaml
+```
+
+This is a softer rerank experiment that pushes repeated chunks from the same sermon down a bit without fully banning them:
+
+- config knob: `doc_repeat_penalty: 2.0`
+- output files:
+  - `results/sermon_doc_penalty_metrics.csv`
+  - `results/sermon_doc_penalty_per_query.json`
+
 ## Configuration
 
 The config files define settings like:
@@ -220,6 +233,7 @@ Main files:
 - [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
 - [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml)
+- [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml)
 - [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml)
 
 Current setup:
@@ -230,6 +244,7 @@ Current setup:
 - `--limit` can override dataset size for fast local debugging
 - Dense configs can set `dense_backend: faiss` or `dense_backend: chromadb`
 - Any experiment can set `answer_quality.use_ragas: true` to add the optional `ragas_context_recall` column
+- Sermon study configs can set `dedupe_docs: true` or `doc_repeat_penalty: 2.0` for doc-level reranking experiments
 
 Example dense config slice with the optional backends:
 
@@ -268,6 +283,8 @@ Current run artifacts:
 - `results/sermon_per_query_results.json`
 - `results/sermon_doc_dedup_metrics.csv`
 - `results/sermon_doc_dedup_per_query.json`
+- `results/sermon_doc_penalty_metrics.csv`
+- `results/sermon_doc_penalty_per_query.json`
 - `results/sermon_chromadb_ragas_metrics.csv`
 - `results/sermon_chromadb_ragas_per_query.json`
 - [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md)
@@ -312,7 +329,15 @@ Optional doc-dedupe study:
 | `dense_sentence_top3_sermon_multilingual_dedup` | `0.8095` | `0.6984` | `0.8095` |
 | `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6190` | `0.3810` | `0.6190` |
 
-This is why the doc-dedupe behavior stays opt-in. It helps some dense recall cases, but it is not a free improvement across every retrieval mode.
+Optional doc-penalty study:
+
+| config | Recall@3 | MRR | Hit Rate |
+|---|---:|---:|---:|
+| `bm25_sentence_top3_sermon_doc_penalty` | `0.2857` | `0.1984` | `0.2857` |
+| `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7619` | `0.6825` | `0.7619` |
+| `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.6190` | `0.3810` | `0.6190` |
+
+This is why both doc-level reranking behaviors stay opt-in. Hard dedupe helps dense recall most, but it hurts BM25 and hybrid more. The softer penalty is gentler, but on this 21-question sermon set it still does not beat the main dense baseline.
 
 ## Example Output
 
@@ -363,6 +388,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - The sermon eval set is still small at 21 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - The optional ChromaDB and RAGAS paths are now verified with a real smoke config, but I have not folded them into the main published benchmark tables
+- The doc-level reranking studies are useful for failure analysis, but neither `dedupe_docs` nor `doc_repeat_penalty` is strong enough yet to become the main sermon default
 - The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
 - The current `ragas` / `langchain` stack emits a Python 3.14 warning during the optional run, even though the config finishes successfully
 
@@ -370,6 +396,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 - Expand the sermon label set toward the original 20-50 question target with tighter coverage across more topics
 - Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
+- Tune the soft `doc_repeat_penalty` setting or try chunk-group reranking so repeated-sermon hits do not crowd out better alternatives
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
 - Add a stronger RAGAS answer metric beyond the current id-based context recall hook

@@ -1,0 +1,38 @@
+dataset:
+  name: sermon
+  sermon_dir: data/raw/sermons
+  questions_path: data/eval/sermon_questions.csv
+  limit: 21
+
+output:
+  metrics_path: results/sermon_doc_penalty_metrics.csv
+  per_query_path: results/sermon_doc_penalty_per_query.json
+
+experiments:
+  - name: bm25_sentence_top3_sermon_doc_penalty
+    retrieval_mode: bm25
+    doc_repeat_penalty: 2.0
+    top_k: 3
+    chunking:
+      strategy: sentence
+      max_sentences: 2
+
+  - name: dense_sentence_top3_sermon_multilingual_doc_penalty
+    retrieval_mode: dense
+    model_name: paraphrase-multilingual-MiniLM-L12-v2
+    doc_repeat_penalty: 2.0
+    top_k: 3
+    chunking:
+      strategy: sentence
+      max_sentences: 2
+
+  - name: hybrid_sentence_top3_sermon_multilingual_doc_penalty
+    retrieval_mode: hybrid
+    model_name: paraphrase-multilingual-MiniLM-L12-v2
+    doc_repeat_penalty: 2.0
+    top_k: 3
+    bm25_weight: 0.5
+    dense_weight: 0.5
+    chunking:
+      strategy: sentence
+      max_sentences: 2

@@ -21,6 +21,8 @@ SERMON_METRICS_PATH = ROOT_DIR / "results" / "sermon_metrics_summary.csv"
 SERMON_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_per_query_results.json"
 SERMON_DOC_DEDUP_METRICS_PATH = ROOT_DIR / "results" / "sermon_doc_dedup_metrics.csv"
 SERMON_DOC_DEDUP_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_doc_dedup_per_query.json"
+SERMON_DOC_PENALTY_METRICS_PATH = ROOT_DIR / "results" / "sermon_doc_penalty_metrics.csv"
+SERMON_DOC_PENALTY_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_doc_penalty_per_query.json"
 SERMON_CHROMADB_RAGAS_METRICS_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_metrics.csv"
 SERMON_CHROMADB_RAGAS_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_per_query.json"
 
@@ -39,6 +41,8 @@ def load_queries(path: str) -> list[dict[str, Any]]:
 def get_dataset_paths(dataset_name: str) -> tuple[Path, Path]:
     if dataset_name == "Sermon (Doc Dedupe Study)":
         return SERMON_DOC_DEDUP_METRICS_PATH, SERMON_DOC_DEDUP_PER_QUERY_PATH
+    if dataset_name == "Sermon (Doc Penalty Study)":
+        return SERMON_DOC_PENALTY_METRICS_PATH, SERMON_DOC_PENALTY_PER_QUERY_PATH
     if dataset_name == "Sermon (ChromaDB + RAGAS)":
         return SERMON_CHROMADB_RAGAS_METRICS_PATH, SERMON_CHROMADB_RAGAS_PER_QUERY_PATH
     if dataset_name == "Sermon":
@@ -195,6 +199,7 @@ def main() -> None:
             "HotpotQA",
             "Sermon",
             "Sermon (Doc Dedupe Study)",
+            "Sermon (Doc Penalty Study)",
             "Sermon (ChromaDB + RAGAS)",
         ],
     )
