@@ -27,6 +27,7 @@ ORDINAL_RE = re.compile(r"第([0-9一二三四五六七八九十两]+)(天|讲|�
 DAY_RE = re.compile(r"day\s*([0-9]+)", re.IGNORECASE)
 OPENING_HINTS = ("开头", "一开始", "开场", "刚开始")
 LAST_HINTS = ("最后一天", "最后一讲", "最后一篇")
+SERIES_HINTS = ("布道会", "初信者话语")
 CJK_NUMBERS = {
     "一": 1,
     "二": 2,
@@ -293,6 +294,10 @@ def query_has_opening_hint(query: str) -> bool:
     return any(item in query for item in OPENING_HINTS)
 
 
+def collect_series_hints(text: str) -> set[str]:
+    return {item for item in SERIES_HINTS if item in text}
+
+
 def rerank_results_with_metadata(
     query: str,
     results: list[dict[str, Any]],
@@ -300,26 +305,42 @@ def rerank_results_with_metadata(
     metadata_config: dict[str, Any],
 ) -> list[dict[str, Any]]:
     title_hint_boost = float(metadata_config.get("title_hint_boost", 0.0))
+    series_hint_boost = float(metadata_config.get("series_hint_boost", 0.0))
     opening_chunk_boost = float(metadata_config.get("opening_chunk_boost", 0.0))
     opening_chunk_window = int(metadata_config.get("opening_chunk_window", 10))
 
     query_numbers = collect_title_numbers(query)
+    query_series = collect_series_hints(query)
     last_hint = query_has_last_hint(query)
     opening_hint = query_has_opening_hint(query)
 
     title_numbers = []
     for item in results:
-        title_numbers.extend(collect_title_numbers(item.get("title", item["doc_id"])))
+        title = item.get("title", item["doc_id"])
+        if query_series and not (query_series & collect_series_hints(title)):
+            continue
+        title_numbers.extend(collect_title_numbers(title))
     max_title_number = max(title_numbers) if title_numbers else None
 
     scored_rows = []
     for item in results:
         row = dict(item)
         boost = 0.0
-        item_numbers = collect_title_numbers(row.get("title", row["doc_id"]))
-        if title_hint_boost > 0 and query_numbers & item_numbers:
+        item_title = row.get("title", row["doc_id"])
+        item_numbers = collect_title_numbers(item_title)
+        item_series = collect_series_hints(item_title)
+        series_match = not query_series or bool(query_series & item_series)
+        if series_hint_boost > 0 and query_series & item_series:
+            boost += series_hint_boost
+        if title_hint_boost > 0 and series_match and query_numbers & item_numbers:
             boost += title_hint_boost
-        elif title_hint_boost > 0 and last_hint and max_title_number and max_title_number in item_numbers:
+        elif (
+            title_hint_boost > 0
+            and series_match
+            and last_hint
+            and max_title_number
+            and max_title_number in item_numbers
+        ):
             boost += title_hint_boost
 
         if opening_hint and opening_chunk_boost > 0:

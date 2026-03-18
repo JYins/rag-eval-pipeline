@@ -24,6 +24,7 @@ experiments:
     top_k: 3
     metadata_rerank:
       title_hint_boost: 6.0
+      series_hint_boost: 8.0
       opening_chunk_boost: 8.0
       opening_chunk_window: 3
     chunking:

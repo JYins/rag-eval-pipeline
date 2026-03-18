@@ -158,6 +158,8 @@ This keeps the extension real. The code can already load the transcript files an
 
 Later I added one more explicit rule here: default sermon staging also reads [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt). That file is just a small tracked list of confirmed duplicate transcript filenames. It keeps the default corpus honest without hiding data-cleanup logic inside the loader or deleting the original local source files.
 
+I also kept the next sermon fix explainable in the same spirit: instead of pushing the day/title boost higher and higher, I made the metadata rerank series-aware. If a query says `布道会`, the day/title boost should apply inside the seminar series first, not leak over to `第七讲` or `第四讲` from another sermon track.
+
 ## What I Would Change Next
 
 - finish the sermon question labels now that the transcript files are staged into `data/raw/sermons/`

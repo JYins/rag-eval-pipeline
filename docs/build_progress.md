@@ -3,19 +3,24 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the default sermon staging path now excludes the two confirmed duplicate transcript files
-- Next step: inspect the last remaining recommended-dense miss (`sermon_024`) and decide whether it needs a better label, a small rerank hint, or cleaner source text
-- Small fix this round: added [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt) and wired it into [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so default staging now keeps only 13 sermon docs
-- Next phase: keep the default corpus clean, then expand the sermon label set again from a less noisy baseline
+- Next step: expand the sermon label set again from this cleaner 13-doc baseline and see whether the current recommended dense path holds up
+- Small fix this round: made the sermon metadata rerank series-aware in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) so `布道会` day queries stay inside the seminar series before title/day boosts are applied
+- Next phase: treat the current 28-question full-hit result as a checkpoint, not an endpoint, and pressure-test it with more labels
 
 ## Last Step
+
+- Added a small `series_hint_boost` path to [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and wired it through [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) plus [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
+- Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for series-aware reranking so `第四天布道会` does not get hijacked by `第四讲`
+- Re-ran the metadata study and recommended dense config on the cleaned corpus: both now reach Recall@3 `1.0000`, and the recommended dense config is `MRR=0.9167`, `Hit Rate=1.0000` on the current 28-question set
+- Verified locally with `32` passing targeted tests from [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
+
+## Previous Step
 
 - Added an explicit exclusion list in [`data/eval/sermon_excluded_files.txt`](/Users/yinshi/Documents/breadrag/data/eval/sermon_excluded_files.txt) for the confirmed duplicate `第5讲` and `第9讲` source files
 - Updated [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so default staging applies that exclusion list before creating symlinks, while leaving the original local `.docx` files untouched
 - Added regression coverage in [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py) for parsing the exclusion list and skipping blocked sermon files during staging
 - Re-ran every sermon result artifact on the cleaned 13-doc staged corpus and verified the current best path on 28 questions: recommended dense Recall@3 `0.9643`, MRR `0.8571`, Hit Rate `0.9643`
 - Verified locally with `30` passing targeted tests from [`tests/test_data_loader_sermon.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader_sermon.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
-
-## Previous Step
 
 - Added 7 new high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), focused on Day2-Day6 seminar passages that can be read directly from the local transcripts
 - Raised the study config limits in [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml), [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml), [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml), [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml), [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml), and [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml) so all sermon presets run against the same expanded pool

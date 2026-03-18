@@ -241,6 +241,7 @@ python scripts/run_eval.py --config configs/sermon_metadata_rerank.yaml
 This keeps the title-aware dense retrieval path, then reranks candidates with small sermon-specific metadata hints:
 
 - `title_hint_boost`: boosts title/day/lesson matches like `第六篇`, `Day6`, `最后一天`
+- `series_hint_boost`: keeps `布道会` queries inside the seminar series before applying the day/title hint
 - `opening_chunk_boost`: boosts early chunks when the query explicitly asks about the opening of a sermon
 - output files:
   - `results/sermon_metadata_rerank_metrics.csv`
@@ -408,9 +409,9 @@ Optional metadata-rerank study:
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
 | `dense_sentence_top3_sermon_multilingual_title_aware_base` | `0.9286` | `0.7619` | `0.9286` |
-| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `0.9643` | `0.8571` | `0.9643` |
+| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9167` | `1.0000` |
 
-This is still the cleanest sermon retrieval path so far. After excluding the two confirmed duplicate sermon files from the default staged corpus, the dense retriever plus the small rerank step got cleaner and the remaining miss set shrank to one real question.
+This is still the cleanest sermon retrieval path so far. After excluding the two confirmed duplicate sermon files from the default staged corpus, I added one more tiny series-aware rerank hint so `布道会` day queries stop boosting the wrong sermon series.
 
 - `sermon_004`: query asks about the opening of a sermon, so an early-chunk boost pulls the correct sermon to rank 1
 - `sermon_021`: query asks about the last day of the seminar, so a day/title hint boosts `Day6` over semantically similar `Day4` / `Day5` candidates
@@ -419,7 +420,7 @@ Current recommended sermon dense config:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
-| `dense_sentence_top3_sermon_multilingual_recommended` | `0.9643` | `0.8571` | `0.9643` |
+| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9167` | `1.0000` |
 
 I keep this as a separate recommended config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path on the current 28-question set.
 
@@ -485,7 +486,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 ## Future Work
 
 - Expand the sermon label set toward the original 20-50 question target with tighter coverage across more topics
-- Investigate the last recommended-dense miss (`sermon_024`) before adding new sermon-specific heuristics
+- Expand the sermon label set again now that the cleaned corpus and series-aware rerank no longer leave an obvious single-query miss
 - Revisit the local sermon source set again if more near-duplicate transcript files show up during later labeling
 - Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
 - Tune the soft `doc_repeat_penalty` setting or try chunk-group reranking so repeated-sermon hits do not crowd out better alternatives
