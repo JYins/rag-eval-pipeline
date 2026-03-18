@@ -167,10 +167,32 @@ def build_retriever(
 
 
 def search_docs(retriever: Any, query: str, config: dict[str, Any]) -> list[dict[str, Any]]:
-    retrieve_k = max(int(config.get("top_k", 3)), 5)
+    top_k = int(config.get("top_k", 3))
+    retrieve_k = max(top_k, 5)
+    if config.get("dedupe_docs"):
+        retrieve_k = max(top_k * 5, 10)
     if config["retrieval_mode"] == "hybrid":
         return retriever.search(query, top_k=retrieve_k, candidate_k=retrieve_k)
     return retriever.search(query, top_k=retrieve_k)
+
+
+def dedupe_results_by_doc_id(results: list[dict[str, Any]], top_k: int) -> list[dict[str, Any]]:
+    picked = []
+    seen_doc_ids: set[str] = set()
+
+    for item in results:
+        doc_id = item["doc_id"]
+        if doc_id in seen_doc_ids:
+            continue
+
+        seen_doc_ids.add(doc_id)
+        row = dict(item)
+        row["rank"] = len(picked) + 1
+        picked.append(row)
+        if len(picked) >= top_k:
+            break
+
+    return picked
 
 
 def trim_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -214,6 +236,8 @@ def run_experiment(
             retriever_cache[docs_key] = build_retriever(row["documents"], config, encoder_cache)
         retriever = retriever_cache[docs_key]
         results = search_docs(retriever, row["question"], config)
+        if config.get("dedupe_docs"):
+            results = dedupe_results_by_doc_id(results, top_k=int(config.get("top_k", 3)))
         gold_doc_ids = get_gold_doc_ids(row)
         retrieval_scores = score_query(results, gold_doc_ids)
 

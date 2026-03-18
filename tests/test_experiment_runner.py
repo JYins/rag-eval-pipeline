@@ -1,5 +1,5 @@
 import src.experiment_runner as experiment_runner
-from src.experiment_runner import load_experiments, run_eval, run_experiment
+from src.experiment_runner import dedupe_results_by_doc_id, load_experiments, run_eval, run_experiment
 
 
 def test_load_experiments_reads_sermon_bm25_config() -> None:
@@ -20,6 +20,30 @@ def test_load_experiments_reads_chromadb_ragas_config() -> None:
     assert len(payload["experiments"]) == 1
     assert payload["experiments"][0]["dense_backend"] == "chromadb"
     assert payload["experiments"][0]["answer_quality"]["use_ragas"] is True
+
+
+def test_load_experiments_reads_doc_dedup_config() -> None:
+    payload = load_experiments("configs/sermon_doc_dedup.yaml")
+
+    assert payload["dataset"]["name"] == "sermon"
+    assert len(payload["experiments"]) == 3
+    assert payload["experiments"][0]["dedupe_docs"] is True
+    assert payload["experiments"][1]["dedupe_docs"] is True
+    assert payload["experiments"][2]["dedupe_docs"] is True
+
+
+def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
+    results = [
+        {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
+        {"chunk_id": "a_2", "doc_id": "doc_a", "rank": 2, "text": "a2"},
+        {"chunk_id": "b_1", "doc_id": "doc_b", "rank": 3, "text": "b1"},
+        {"chunk_id": "c_1", "doc_id": "doc_c", "rank": 4, "text": "c1"},
+    ]
+
+    picked = dedupe_results_by_doc_id(results, top_k=3)
+
+    assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "c_1"]
+    assert [item["rank"] for item in picked] == [1, 2, 3]
 
 
 def test_run_experiment_reuses_retriever_for_same_docs(monkeypatch) -> None:

@@ -40,6 +40,7 @@ rag-eval-pipeline/
 │   ├── default.yaml
 │   ├── experiment_grid.yaml
 │   ├── sermon_chromadb_ragas.yaml
+│   ├── sermon_doc_dedup.yaml
 │   └── sermon.yaml
 ├── data/
 │   ├── raw/                    # downloaded or staged at runtime
@@ -152,7 +153,7 @@ streamlit run app/streamlit_app.py
 ```
 
 Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
-It now includes a third preset for the optional `Sermon (ChromaDB + RAGAS)` smoke run.
+It now includes extra presets for the optional `Sermon (Doc Dedupe Study)` and `Sermon (ChromaDB + RAGAS)` runs.
 
 ### 7. Prepare sermon transcripts
 
@@ -193,6 +194,17 @@ This is a small real verification config for the optional stack:
   - `results/sermon_chromadb_ragas_metrics.csv`
   - `results/sermon_chromadb_ragas_per_query.json`
 
+### 10. Run the optional doc-dedupe study
+
+```bash
+python scripts/run_eval.py --config configs/sermon_doc_dedup.yaml
+```
+
+This keeps the main sermon baseline untouched and writes a separate study output for `dedupe_docs: true`:
+
+- `results/sermon_doc_dedup_metrics.csv`
+- `results/sermon_doc_dedup_per_query.json`
+
 ## Configuration
 
 The config files define settings like:
@@ -207,6 +219,7 @@ Main files:
 - [`configs/default.yaml`](/Users/yinshi/Documents/breadrag/configs/default.yaml)
 - [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
 - [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
+- [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml)
 - [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml)
 
 Current setup:
@@ -253,6 +266,8 @@ Current run artifacts:
 - `results/failure_cases.md`
 - `results/sermon_metrics_summary.csv`
 - `results/sermon_per_query_results.json`
+- `results/sermon_doc_dedup_metrics.csv`
+- `results/sermon_doc_dedup_per_query.json`
 - `results/sermon_chromadb_ragas_metrics.csv`
 - `results/sermon_chromadb_ragas_per_query.json`
 - [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md)
@@ -288,6 +303,16 @@ Optional ChromaDB + RAGAS smoke run:
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
 | `dense_sentence_top3_sermon_chromadb_ragas` | `0.8095` | `0.6190` | `0.8095` | `0.8095` |
+
+Optional doc-dedupe study:
+
+| config | Recall@3 | MRR | Hit Rate |
+|---|---:|---:|---:|
+| `bm25_sentence_top3_sermon_dedup` | `0.2857` | `0.1984` | `0.2857` |
+| `dense_sentence_top3_sermon_multilingual_dedup` | `0.8095` | `0.6984` | `0.8095` |
+| `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6190` | `0.3810` | `0.6190` |
+
+This is why the doc-dedupe behavior stays opt-in. It helps some dense recall cases, but it is not a free improvement across every retrieval mode.
 
 ## Example Output
 

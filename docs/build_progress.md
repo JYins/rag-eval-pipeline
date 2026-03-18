@@ -3,18 +3,22 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: inspect the ChromaDB + RAGAS smoke run against the FAISS sermon dense run and decide whether to keep a dedicated optional-results section in the dashboard
+- Next step: inspect whether doc-level reranking or chunk grouping can keep the dense dedupe gain without hurting BM25 / hybrid hit rate
 - Small fix this round: added an opt-in offline/debug mode so `scripts/run_eval.py` can keep BM25 runs going and mark dense or optional-package failures as `skipped` instead of crashing the whole batch
 - Next phase: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
 
 ## Last Step
 
+- Added [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml) as a clean opt-in study for `dedupe_docs: true` instead of changing the main sermon baseline
+- Verified the trade-off locally: doc dedupe helped the dense sermon run's Recall@3, but it hurt BM25 and hybrid hit rate, so it stays experimental
+- Exposed the doc-dedupe study as another dashboard preset in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
+
+## Previous Step
+
 - Installed local `chromadb` and `ragas` into the project venv and verified the optional path with [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - Fixed [`src/indexing.py`](/Users/yinshi/Documents/breadrag/src/indexing.py) to batch Chroma inserts so larger chunk sets do not exceed ChromaDB's max batch size
 - Added regression coverage in [`tests/test_retrieval.py`](/Users/yinshi/Documents/breadrag/tests/test_retrieval.py) and [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for the optional config and Chroma batching
 - Verified the real smoke run locally: Recall@3 `0.8095`, MRR `0.6190`, Hit Rate `0.8095`, `ragas_context_recall` `0.8095`
-
-## Previous Step
 
 - Added `--skip-unavailable` to [`scripts/run_eval.py`](/Users/yinshi/Documents/breadrag/scripts/run_eval.py) and skip reporting in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
 - Kept the default path fail-loud, but now offline debug runs can still export `metrics_summary.csv` with explicit `status=skipped` rows
