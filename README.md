@@ -77,7 +77,8 @@ rag-eval-pipeline/
 └── docs/
     ├── build_progress.md
     ├── dashboard_placeholder.md
-    └── design_decisions.md
+    ├── design_decisions.md
+    └── sermon_failure_cases.md
 ```
 
 ## Quick Start
@@ -151,6 +152,7 @@ streamlit run app/streamlit_app.py
 ```
 
 Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
+It now includes a third preset for the optional `Sermon (ChromaDB + RAGAS)` smoke run.
 
 ### 7. Prepare sermon transcripts
 
@@ -253,6 +255,7 @@ Current run artifacts:
 - `results/sermon_per_query_results.json`
 - `results/sermon_chromadb_ragas_metrics.csv`
 - `results/sermon_chromadb_ragas_per_query.json`
+- [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md)
 
 Current 500-sample full-grid highlights:
 

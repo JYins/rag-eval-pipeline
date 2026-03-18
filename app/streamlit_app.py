@@ -19,6 +19,8 @@ DEFAULT_METRICS_PATH = ROOT_DIR / "results" / "metrics_summary.csv"
 DEFAULT_PER_QUERY_PATH = ROOT_DIR / "results" / "per_query_results.json"
 SERMON_METRICS_PATH = ROOT_DIR / "results" / "sermon_metrics_summary.csv"
 SERMON_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_per_query_results.json"
+SERMON_CHROMADB_RAGAS_METRICS_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_metrics.csv"
+SERMON_CHROMADB_RAGAS_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_per_query.json"
 
 
 @st.cache_data
@@ -33,6 +35,8 @@ def load_queries(path: str) -> list[dict[str, Any]]:
 
 
 def get_dataset_paths(dataset_name: str) -> tuple[Path, Path]:
+    if dataset_name == "Sermon (ChromaDB + RAGAS)":
+        return SERMON_CHROMADB_RAGAS_METRICS_PATH, SERMON_CHROMADB_RAGAS_PER_QUERY_PATH
     if dataset_name == "Sermon":
         return SERMON_METRICS_PATH, SERMON_PER_QUERY_PATH
     return DEFAULT_METRICS_PATH, DEFAULT_PER_QUERY_PATH
@@ -74,7 +78,10 @@ def show_summary(metrics_df: pd.DataFrame) -> None:
     st.subheader("Cross-Configuration Summary")
     st.dataframe(metrics_df, use_container_width=True)
 
-    chart_df = metrics_df.set_index("config_name")[["recall@3", "mrr", "hit_rate"]]
+    chart_columns = ["recall@3", "mrr", "hit_rate"]
+    if "ragas_context_recall" in metrics_df.columns:
+        chart_columns.append("ragas_context_recall")
+    chart_df = metrics_df.set_index("config_name")[chart_columns]
     st.subheader("Main Retrieval Metrics")
     st.bar_chart(chart_df)
 
@@ -110,13 +117,14 @@ def show_query_inspector(query_rows: list[dict[str, Any]]) -> None:
 
     compare_table = []
     for row in compare_rows:
-        compare_table.append(
-            {
-                "config_name": row["config_name"],
-                **row["retrieval_metrics"],
-                **row["answer_quality"],
-            }
-        )
+        table_row = {
+            "config_name": row["config_name"],
+            **row["retrieval_metrics"],
+            **row["answer_quality"],
+        }
+        if row.get("ragas_metrics"):
+            table_row.update(row["ragas_metrics"])
+        compare_table.append(table_row)
     st.dataframe(pd.DataFrame(compare_table), use_container_width=True)
 
     config_names = [row["config_name"] for row in compare_rows]
@@ -130,11 +138,14 @@ def show_query_inspector(query_rows: list[dict[str, Any]]) -> None:
         if row["config_name"] not in picked_configs:
             continue
         with st.expander(row["config_name"], expanded=False):
-            left, right = st.columns(2)
+            left, middle, right = st.columns(3)
             left.metric("Recall@3", f"{row['retrieval_metrics']['recall@3']:.3f}")
             left.metric("MRR", f"{row['retrieval_metrics']['mrr']:.3f}")
-            right.metric("Hit Rate", f"{row['retrieval_metrics']['hit_rate']:.3f}")
-            right.metric("Answer F1", f"{row['answer_quality']['f1']:.3f}")
+            middle.metric("Hit Rate", f"{row['retrieval_metrics']['hit_rate']:.3f}")
+            middle.metric("Answer F1", f"{row['answer_quality']['f1']:.3f}")
+            if row.get("ragas_metrics"):
+                ragas_recall = row["ragas_metrics"].get("ragas_context_recall", 0.0)
+                right.metric("RAGAS Context Recall", f"{ragas_recall:.3f}")
             st.dataframe(format_results_table(row["results"]), use_container_width=True)
 
 
@@ -158,6 +169,9 @@ def show_failure_cases(query_rows: list[dict[str, Any]]) -> None:
         with st.expander(title, expanded=False):
             st.markdown(f"**Answer:** {row['answer']}")
             st.markdown(f"**Gold Docs:** {', '.join(row['gold_doc_ids'])}")
+            if row.get("ragas_metrics"):
+                ragas_recall = row["ragas_metrics"].get("ragas_context_recall", 0.0)
+                st.markdown(f"**RAGAS Context Recall:** {ragas_recall:.3f}")
             st.dataframe(format_results_table(row["results"]), use_container_width=True)
 
 
@@ -171,7 +185,10 @@ def main() -> None:
     st.title("RAG Evaluation Dashboard")
     st.caption("Compare retrieval configs, inspect single-query behavior, and review failure cases.")
 
-    dataset_name = st.sidebar.selectbox("Dataset preset", options=["HotpotQA", "Sermon"])
+    dataset_name = st.sidebar.selectbox(
+        "Dataset preset",
+        options=["HotpotQA", "Sermon", "Sermon (ChromaDB + RAGAS)"],
+    )
     default_metrics_path, default_per_query_path = get_dataset_paths(dataset_name)
 
     metrics_path = st.sidebar.text_input("Metrics CSV", str(default_metrics_path))

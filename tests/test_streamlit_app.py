@@ -1,6 +1,8 @@
 from app.streamlit_app import (
     DEFAULT_METRICS_PATH,
     DEFAULT_PER_QUERY_PATH,
+    SERMON_CHROMADB_RAGAS_METRICS_PATH,
+    SERMON_CHROMADB_RAGAS_PER_QUERY_PATH,
     SERMON_METRICS_PATH,
     SERMON_PER_QUERY_PATH,
     get_dataset_paths,
@@ -19,3 +21,10 @@ def test_get_dataset_paths_returns_sermon_defaults() -> None:
 
     assert metrics_path == SERMON_METRICS_PATH
     assert per_query_path == SERMON_PER_QUERY_PATH
+
+
+def test_get_dataset_paths_returns_sermon_chromadb_ragas_defaults() -> None:
+    metrics_path, per_query_path = get_dataset_paths("Sermon (ChromaDB + RAGAS)")
+
+    assert metrics_path == SERMON_CHROMADB_RAGAS_METRICS_PATH
+    assert per_query_path == SERMON_CHROMADB_RAGAS_PER_QUERY_PATH
