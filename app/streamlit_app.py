@@ -27,6 +27,8 @@ SERMON_TITLE_AWARE_METRICS_PATH = ROOT_DIR / "results" / "sermon_title_aware_met
 SERMON_TITLE_AWARE_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_title_aware_per_query.json"
 SERMON_METADATA_RERANK_METRICS_PATH = ROOT_DIR / "results" / "sermon_metadata_rerank_metrics.csv"
 SERMON_METADATA_RERANK_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_metadata_rerank_per_query.json"
+SERMON_DENSE_RECOMMENDED_METRICS_PATH = ROOT_DIR / "results" / "sermon_dense_recommended_metrics.csv"
+SERMON_DENSE_RECOMMENDED_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_dense_recommended_per_query.json"
 SERMON_CHROMADB_RAGAS_METRICS_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_metrics.csv"
 SERMON_CHROMADB_RAGAS_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_chromadb_ragas_per_query.json"
 
@@ -51,6 +53,8 @@ def get_dataset_paths(dataset_name: str) -> tuple[Path, Path]:
         return SERMON_TITLE_AWARE_METRICS_PATH, SERMON_TITLE_AWARE_PER_QUERY_PATH
     if dataset_name == "Sermon (Metadata Rerank Study)":
         return SERMON_METADATA_RERANK_METRICS_PATH, SERMON_METADATA_RERANK_PER_QUERY_PATH
+    if dataset_name == "Sermon (Recommended Dense)":
+        return SERMON_DENSE_RECOMMENDED_METRICS_PATH, SERMON_DENSE_RECOMMENDED_PER_QUERY_PATH
     if dataset_name == "Sermon (ChromaDB + RAGAS)":
         return SERMON_CHROMADB_RAGAS_METRICS_PATH, SERMON_CHROMADB_RAGAS_PER_QUERY_PATH
     if dataset_name == "Sermon":
@@ -214,6 +218,7 @@ def main() -> None:
             "Sermon (Doc Penalty Study)",
             "Sermon (Title-Aware Study)",
             "Sermon (Metadata Rerank Study)",
+            "Sermon (Recommended Dense)",
             "Sermon (ChromaDB + RAGAS)",
         ],
     )

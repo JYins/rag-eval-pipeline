@@ -3,21 +3,16 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: decide whether the metadata-aware dense sermon path should stay as a study or become the dense sermon default after the label set grows
-- Small fix this round: added an opt-in metadata rerank so title/day hints and opening-chunk cues can reorder dense sermon candidates
+- Next step: grow the sermon label set enough to decide whether the recommended dense path should replace the current shared sermon baseline
+- Small fix this round: added a separate recommended dense sermon config so the best current path has one stable entry point without hiding the baseline comparison
 - Next phase: tighten the labeled questions where they are too easy or too noisy, then rerun the sermon comparison set
 
 ## Last Step
 
-- Added metadata-aware reranking in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) with two explicit sermon cues:
-  - title/day hint boost like `第六篇`, `Day6`, `最后一天`
-  - opening-chunk boost when the query asks about a sermon opening
-- Added [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) and exposed it as `Sermon (Metadata Rerank Study)` in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
-- Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py) for the new study and boost logic
-- Verified the real sermon metadata-rerank run locally:
-  - base dense title-aware: Recall@3 `0.9048`, MRR `0.7817`, Hit Rate `0.9524`
-  - metadata-reranked dense: Recall@3 `1.0000`, MRR `0.8889`, Hit Rate `1.0000`
-  - `sermon_004` is fixed by the opening-chunk boost and `sermon_021` is fixed by the day/title hint boost
+- Added [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml) as the one-command best sermon dense path
+- Exposed it in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) as `Sermon (Recommended Dense)` without changing the shared baseline preset
+- Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py) for the new recommended config and preset
+- Verified the recommended dense run locally: Recall@3 `1.0000`, MRR `0.8889`, Hit Rate `1.0000`
 
 ## Previous Step
 

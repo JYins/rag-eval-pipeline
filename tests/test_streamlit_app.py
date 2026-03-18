@@ -5,6 +5,8 @@ from app.streamlit_app import (
     SERMON_DOC_DEDUP_PER_QUERY_PATH,
     SERMON_DOC_PENALTY_METRICS_PATH,
     SERMON_DOC_PENALTY_PER_QUERY_PATH,
+    SERMON_DENSE_RECOMMENDED_METRICS_PATH,
+    SERMON_DENSE_RECOMMENDED_PER_QUERY_PATH,
     SERMON_METADATA_RERANK_METRICS_PATH,
     SERMON_METADATA_RERANK_PER_QUERY_PATH,
     SERMON_TITLE_AWARE_METRICS_PATH,
@@ -57,6 +59,13 @@ def test_get_dataset_paths_returns_sermon_metadata_rerank_defaults() -> None:
 
     assert metrics_path == SERMON_METADATA_RERANK_METRICS_PATH
     assert per_query_path == SERMON_METADATA_RERANK_PER_QUERY_PATH
+
+
+def test_get_dataset_paths_returns_sermon_dense_recommended_defaults() -> None:
+    metrics_path, per_query_path = get_dataset_paths("Sermon (Recommended Dense)")
+
+    assert metrics_path == SERMON_DENSE_RECOMMENDED_METRICS_PATH
+    assert per_query_path == SERMON_DENSE_RECOMMENDED_PER_QUERY_PATH
 
 
 def test_get_dataset_paths_returns_sermon_chromadb_ragas_defaults() -> None:

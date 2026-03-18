@@ -153,7 +153,7 @@ streamlit run app/streamlit_app.py
 ```
 
 Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
-It now includes extra presets for the optional `Sermon (Doc Dedupe Study)`, `Sermon (Doc Penalty Study)`, `Sermon (Title-Aware Study)`, `Sermon (Metadata Rerank Study)`, and `Sermon (ChromaDB + RAGAS)` runs.
+It now includes extra presets for the optional `Sermon (Doc Dedupe Study)`, `Sermon (Doc Penalty Study)`, `Sermon (Title-Aware Study)`, `Sermon (Metadata Rerank Study)`, `Sermon (Recommended Dense)`, and `Sermon (ChromaDB + RAGAS)` runs.
 
 ### 7. Prepare sermon transcripts
 
@@ -245,6 +245,20 @@ This keeps the title-aware dense retrieval path, then reranks candidates with sm
   - `results/sermon_metadata_rerank_metrics.csv`
   - `results/sermon_metadata_rerank_per_query.json`
 
+### 14. Run the recommended sermon dense config
+
+```bash
+python scripts/run_eval.py --config configs/sermon_dense_recommended.yaml
+```
+
+This is the current best sermon dense path in one file:
+
+- title-aware chunks
+- metadata rerank enabled
+- output files:
+  - `results/sermon_dense_recommended_metrics.csv`
+  - `results/sermon_dense_recommended_per_query.json`
+
 ## Configuration
 
 The config files define settings like:
@@ -260,6 +274,7 @@ Main files:
 - [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml)
 - [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml)
+- [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
 - [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml)
 - [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml)
 - [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml)
@@ -314,6 +329,8 @@ Current run artifacts:
 - `results/sermon_per_query_results.json`
 - `results/sermon_doc_dedup_metrics.csv`
 - `results/sermon_doc_dedup_per_query.json`
+- `results/sermon_dense_recommended_metrics.csv`
+- `results/sermon_dense_recommended_per_query.json`
 - `results/sermon_doc_penalty_metrics.csv`
 - `results/sermon_doc_penalty_per_query.json`
 - `results/sermon_title_aware_metrics.csv`
@@ -396,6 +413,14 @@ This is the cleanest final sermon retrieval path so far. The dense retriever sti
 - `sermon_004`: query asks about the opening of a sermon, so an early-chunk boost pulls the correct sermon to rank 1
 - `sermon_021`: query asks about the last day of the seminar, so a day/title hint boosts `Day6` over semantically similar `Day4` / `Day5` candidates
 
+Current recommended sermon dense config:
+
+| config | Recall@3 | MRR | Hit Rate |
+|---|---:|---:|---:|
+| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.8889` | `1.0000` |
+
+I keep this as a separate recommended config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path.
+
 ## Example Output
 
 Current eval CLI example:
@@ -450,6 +475,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - The doc-level reranking studies are useful for failure analysis, but even after the soft rerank tie-break fix they are still sermon-only experiments, not a new default path
 - The title-aware chunk study is strong for dense sermon retrieval, but it hurts BM25 badly, so right now it is still an opt-in study instead of replacing the shared sermon baseline
 - The metadata-rerank study currently reaches perfect scores on only 21 labeled sermon questions, so I treat it as a useful local heuristic, not a claim that sermon retrieval is solved
+- The recommended sermon dense config is genuinely the best current path, but it is still built from sermon-specific heuristics over a small label set
 - The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
 - The current `ragas` / `langchain` stack emits a Python 3.14 warning during the optional run, even though the config finishes successfully
 
@@ -460,6 +486,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - Tune the soft `doc_repeat_penalty` setting or try chunk-group reranking so repeated-sermon hits do not crowd out better alternatives
 - Split the sermon path into retrieval-mode-specific configs if the title-aware dense variant keeps outperforming the one-size-fits-all baseline
 - Decide whether the sermon metadata rerank should stay a study config or become the dense sermon default after the label set gets larger
+- If the sermon label set grows, revisit whether `configs/sermon_dense_recommended.yaml` should replace the current sermon dense baseline
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
 - Add a stronger RAGAS answer metric beyond the current id-based context recall hook

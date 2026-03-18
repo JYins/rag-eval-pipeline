@@ -68,6 +68,15 @@ def test_load_experiments_reads_metadata_rerank_config() -> None:
     assert payload["experiments"][1]["metadata_rerank"]["title_hint_boost"] == 6.0
 
 
+def test_load_experiments_reads_dense_recommended_config() -> None:
+    payload = load_experiments("configs/sermon_dense_recommended.yaml")
+
+    assert payload["dataset"]["name"] == "sermon"
+    assert len(payload["experiments"]) == 1
+    assert payload["experiments"][0]["metadata_rerank"]["title_hint_boost"] == 6.0
+    assert payload["experiments"][0]["chunking"]["include_title"] is True
+
+
 def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
     results = [
         {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
