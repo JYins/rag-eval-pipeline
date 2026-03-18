@@ -49,6 +49,15 @@ def test_sentence_chunk_groups_sentences() -> None:
     assert chunks[0]["text"] == "First sentence. Second sentence."
 
 
+def test_sentence_chunk_can_prefix_title() -> None:
+    sentences = ["First sentence.", "Second sentence."]
+    doc = make_doc(" ".join(sentences), sentences=sentences)
+
+    chunks = chunk_by_sentence(doc, max_sentences=2, include_title=True)
+
+    assert chunks[0]["text"] == "Test Doc First sentence. Second sentence."
+
+
 def test_paragraph_chunk_splits_on_blank_lines() -> None:
     text = "Para one line.\nStill para one.\n\nPara two here.\n\nPara three."
     doc = make_doc(text)

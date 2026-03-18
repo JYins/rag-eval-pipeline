@@ -161,5 +161,6 @@ This keeps the extension real. The code can already load the transcript files an
 - finish the sermon question labels now that the transcript files are staged into `data/raw/sermons/`
 - run the same eval loop on the sermon config and compare where HotpotQA trends do or do not transfer
 - keep the sermon doc-level reranking ideas as opt-in studies for now, because hard doc dedupe helped dense recall but hurt BM25 / hybrid, and even after fixing the soft `doc_repeat_penalty` tie-break the gain is still sermon-specific
+- keep the new title-aware chunk text as a sermon retrieval study rather than a global default, because it helps multilingual dense retrieval a lot but hurts BM25 badly in the same dataset
 - add a more realistic answer metric later, either RAGAS or a small generated-answer path
 - compare FAISS vs ChromaDB more broadly after the first real smoke run, which now works through `configs/sermon_chromadb_ragas.yaml`

@@ -26,6 +26,8 @@ def chunk_kwargs_from_config(config: dict[str, Any]) -> dict[str, Any]:
     chunking = config.get("chunking", {})
     strategy = chunking.get("strategy", "sentence")
     kwargs: dict[str, Any] = {}
+    if "include_title" in chunking:
+        kwargs["include_title"] = bool(chunking.get("include_title", False))
     if strategy == "fixed":
         kwargs["chunk_size"] = int(chunking.get("chunk_size", 120))
         kwargs["overlap"] = int(chunking.get("overlap", 20))

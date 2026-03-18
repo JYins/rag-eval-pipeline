@@ -48,6 +48,16 @@ def test_load_experiments_reads_doc_penalty_config() -> None:
     assert payload["experiments"][2]["doc_repeat_penalty"] == 2.0
 
 
+def test_load_experiments_reads_title_aware_config() -> None:
+    payload = load_experiments("configs/sermon_title_aware.yaml")
+
+    assert payload["dataset"]["name"] == "sermon"
+    assert len(payload["experiments"]) == 3
+    assert payload["experiments"][0]["chunking"]["include_title"] is True
+    assert payload["experiments"][1]["chunking"]["include_title"] is True
+    assert payload["experiments"][2]["chunking"]["include_title"] is True
+
+
 def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
     results = [
         {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},

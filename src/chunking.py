@@ -25,10 +25,13 @@ def make_chunk(
     strategy: str,
     sentence_ids: list[int] | None = None,
     paragraph_index: int | None = None,
+    include_title: bool = False,
 ) -> dict[str, Any]:
     chunk_text = clean_text(text)
     if not chunk_text:
         raise ValueError("chunk text should not be empty")
+    if include_title and doc.get("title"):
+        chunk_text = clean_text(f"{doc['title']} {chunk_text}")
 
     return {
         "chunk_id": f"{doc['doc_id']}_chunk_{chunk_index}",
@@ -49,6 +52,7 @@ def chunk_fixed_size(
     doc: dict[str, Any],
     chunk_size: int = 120,
     overlap: int = 20,
+    include_title: bool = False,
 ) -> list[dict[str, Any]]:
     """Split one doc into fixed-size word chunks."""
     if chunk_size <= 0:
@@ -74,6 +78,7 @@ def chunk_fixed_size(
                 text=joiner.join(piece),
                 chunk_index=chunk_index,
                 strategy="fixed",
+                include_title=include_title,
             )
         )
     return chunks
@@ -82,6 +87,7 @@ def chunk_fixed_size(
 def chunk_by_sentence(
     doc: dict[str, Any],
     max_sentences: int = 3,
+    include_title: bool = False,
 ) -> list[dict[str, Any]]:
     """Group nearby sentences into one chunk."""
     if max_sentences <= 0:
@@ -105,12 +111,16 @@ def chunk_by_sentence(
                 chunk_index=chunk_index,
                 strategy="sentence",
                 sentence_ids=sentence_ids,
+                include_title=include_title,
             )
         )
     return chunks
 
 
-def chunk_by_paragraph(doc: dict[str, Any]) -> list[dict[str, Any]]:
+def chunk_by_paragraph(
+    doc: dict[str, Any],
+    include_title: bool = False,
+) -> list[dict[str, Any]]:
     """Split doc text by blank lines."""
     text = str(doc.get("text", ""))
     if not text.strip():
@@ -131,6 +141,7 @@ def chunk_by_paragraph(doc: dict[str, Any]) -> list[dict[str, Any]]:
                 chunk_index=chunk_index,
                 strategy="paragraph",
                 paragraph_index=chunk_index,
+                include_title=include_title,
             )
         )
     return chunks

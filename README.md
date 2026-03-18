@@ -153,7 +153,7 @@ streamlit run app/streamlit_app.py
 ```
 
 Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
-It now includes extra presets for the optional `Sermon (Doc Dedupe Study)`, `Sermon (Doc Penalty Study)`, and `Sermon (ChromaDB + RAGAS)` runs.
+It now includes extra presets for the optional `Sermon (Doc Dedupe Study)`, `Sermon (Doc Penalty Study)`, `Sermon (Title-Aware Study)`, and `Sermon (ChromaDB + RAGAS)` runs.
 
 ### 7. Prepare sermon transcripts
 
@@ -218,6 +218,19 @@ This is a softer rerank experiment that pushes repeated chunks from the same ser
   - `results/sermon_doc_penalty_metrics.csv`
   - `results/sermon_doc_penalty_per_query.json`
 
+### 12. Run the optional title-aware study
+
+```bash
+python scripts/run_eval.py --config configs/sermon_title_aware.yaml
+```
+
+This keeps the sermon chunking the same, but prefixes each chunk with the sermon title before indexing:
+
+- config knob: `chunking.include_title: true`
+- output files:
+  - `results/sermon_title_aware_metrics.csv`
+  - `results/sermon_title_aware_per_query.json`
+
 ## Configuration
 
 The config files define settings like:
@@ -234,6 +247,7 @@ Main files:
 - [`configs/sermon_chromadb_ragas.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_chromadb_ragas.yaml)
 - [`configs/sermon_doc_dedup.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_dedup.yaml)
 - [`configs/sermon_doc_penalty.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_doc_penalty.yaml)
+- [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml)
 - [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml)
 
 Current setup:
@@ -245,6 +259,7 @@ Current setup:
 - Dense configs can set `dense_backend: faiss` or `dense_backend: chromadb`
 - Any experiment can set `answer_quality.use_ragas: true` to add the optional `ragas_context_recall` column
 - Sermon study configs can set `dedupe_docs: true` or `doc_repeat_penalty: 2.0` for doc-level reranking experiments
+- Sermon chunking configs can set `include_title: true` to prepend the sermon title into each chunk before retrieval
 
 Example dense config slice with the optional backends:
 
@@ -285,6 +300,8 @@ Current run artifacts:
 - `results/sermon_doc_dedup_per_query.json`
 - `results/sermon_doc_penalty_metrics.csv`
 - `results/sermon_doc_penalty_per_query.json`
+- `results/sermon_title_aware_metrics.csv`
+- `results/sermon_title_aware_per_query.json`
 - `results/sermon_chromadb_ragas_metrics.csv`
 - `results/sermon_chromadb_ragas_per_query.json`
 - [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md)
@@ -339,6 +356,16 @@ Optional doc-penalty study:
 
 This is why both doc-level reranking behaviors stay opt-in. A small tie-break fix made the softer penalty recover the same dense Recall@3 as hard dedupe on this 21-question set, but BM25 and hybrid still do not improve, so I keep these as sermon-only studies instead of changing the main baseline.
 
+Optional title-aware study:
+
+| config | Recall@3 | MRR | Hit Rate |
+|---|---:|---:|---:|
+| `bm25_sentence_top3_sermon_title_aware` | `0.0952` | `0.0952` | `0.0952` |
+| `dense_sentence_top3_sermon_multilingual_title_aware` | `0.9048` | `0.7817` | `0.9524` |
+| `hybrid_sentence_top3_sermon_multilingual_title_aware` | `0.7143` | `0.4405` | `0.8571` |
+
+This is the clearest sermon-specific gain so far. For multilingual dense retrieval, simply including the sermon title in each chunk helps the model anchor verse, sermon-series, and day-based questions much better. It is not a universal trick though, because BM25 gets much worse when the titles dominate token overlap.
+
 ## Example Output
 
 Current eval CLI example:
@@ -380,6 +407,7 @@ I kept the design simple on purpose.
 - The standard eval config now uses `500` samples, while `--limit` is reserved for debug runs only
 - In the full 15-config benchmark, paragraph chunking gave the strongest average retrieval quality while hybrid gave the best average coverage
 - The sermon path stages real local transcripts first, then uses a small manually labeled eval set instead of pretending benchmark labels already exist
+- On the sermon set, chunk granularity changes alone did not fix the remaining misses, but a simple title-aware chunk text did improve dense retrieval a lot
 
 More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md).
 
@@ -389,6 +417,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - The optional ChromaDB and RAGAS paths are now verified with a real smoke config, but I have not folded them into the main published benchmark tables
 - The doc-level reranking studies are useful for failure analysis, but even after the soft rerank tie-break fix they are still sermon-only experiments, not a new default path
+- The title-aware chunk study is strong for dense sermon retrieval, but it hurts BM25 badly, so right now it is still an opt-in study instead of replacing the shared sermon baseline
 - The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
 - The current `ragas` / `langchain` stack emits a Python 3.14 warning during the optional run, even though the config finishes successfully
 
@@ -397,6 +426,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 - Expand the sermon label set toward the original 20-50 question target with tighter coverage across more topics
 - Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
 - Tune the soft `doc_repeat_penalty` setting or try chunk-group reranking so repeated-sermon hits do not crowd out better alternatives
+- Split the sermon path into retrieval-mode-specific configs if the title-aware dense variant keeps outperforming the one-size-fits-all baseline
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
 - Add a stronger RAGAS answer metric beyond the current id-based context recall hook
