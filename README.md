@@ -2,30 +2,24 @@
 
 [![CI](https://github.com/JYins/rag-eval-pipeline/actions/workflows/ci.yml/badge.svg)](https://github.com/JYins/rag-eval-pipeline/actions/workflows/ci.yml)
 
-A config-driven evaluation framework for RAG retrieval systems, benchmarked on HotpotQA and then extended with a local Chinese sermon transcript path. I built this because I wanted something small but actually runnable, where I can compare chunking and retrieval choices clearly instead of just wiring up a chatbot and hoping the retrieval is good enough.
+I built this project after running into the same problem twice. During my SmartEarth internship, I spent a lot of time comparing retrieval setups for long-document QA and saw how much chunking, indexing, and embedding choices could change the result. Later, when I tried building a Chinese sermon QA prototype for my church, the simple "vector DB + LLM API" path felt much worse than I expected. That pushed me to build a smaller but actually runnable evaluation pipeline first, so I could inspect retrieval quality before pretending the generation side was solved.
 
 ## Why I Built This
 
-I wanted to understand what really changes retrieval quality in a RAG pipeline. Different chunk sizes, sentence splits, BM25 vs dense retrieval, and different embedding models all look like small choices, but they can change results a lot. This repo focuses on evaluation and engineering clarity, not packaging everything into a shiny chatbot.
+The main goal here is not to make a flashy chatbot demo. I wanted a repo where I can answer a more basic engineering question honestly: what is actually helping retrieval, and what only looks good in a diagram.
 
-The HotpotQA path is already runnable end to end: data loading, cleaning, chunking, sparse/dense/hybrid retrieval, metrics, result export, and a Streamlit dashboard. The sermon extension now also has a real labeled question set over local transcripts, so the same eval runner can be reused on a second dataset instead of stopping at a template.
+The first half of the repo uses HotpotQA because it gives me built-in supervision and lets me compare chunking, sparse/dense/hybrid retrieval, and embedding choices in a controlled way. The second half is more personal: I reused the same pipeline on local Chinese sermon transcripts, labeled a small eval set, and used that to understand why my original church QA idea was underperforming.
+
+That is also why this repo looks the way it does. It is evaluation-heavy on purpose. I would rather understand retrieval failure cases clearly than rush into a polished app with weak grounding.
 
 ## What It Does
 
-- Downloads and parses a local HotpotQA subset for retrieval experiments
-- Cleans and normalizes text before chunking
-- Supports 3 chunking strategies: fixed-size, sentence-based, paragraph-based
-- Preserves chunk metadata like `doc_id`, `chunk_id`, and `source`
-- Runs sparse retrieval with BM25
-- Runs dense retrieval with `sentence-transformers` and FAISS
-- Can switch dense indexing between FAISS and ChromaDB
-- Runs hybrid retrieval with simple weighted rank fusion
-- Supports 2 main HotpotQA embedding models and a second local sermon dataset path
-- Computes `Recall@1`, `Recall@3`, `Recall@5`, `MRR`, `Hit Rate`, and a simple answer overlap proxy for both English and Chinese text
-- Can optionally add a RAGAS id-based context recall metric in the eval output
-- Runs config-driven experiments and exports summary + per-query results
-- Includes a Streamlit dashboard for cross-config inspection
-- Adds a second dataset path for Chinese sermon transcripts with local file staging and labeled eval questions
+- Runs a config-driven retrieval benchmark on HotpotQA with 3 chunking strategies, 2 embedding models, and sparse / dense / hybrid retrieval
+- Exports real comparison artifacts: summary metrics, per-query retrieval results, and failure-case notes
+- Includes a small Streamlit dashboard for checking what changed across configs instead of reading raw JSON by hand
+- Reuses the same evaluation runner on a second dataset of local Chinese sermon transcripts
+- Supports optional ChromaDB and RAGAS paths without making the whole repo depend on them as the default benchmark flow
+- Keeps the code path simple enough to explain in an interview without hiding everything behind a framework
 
 ## Project Structure
 
@@ -457,31 +451,20 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 ## Limitations
 
-- The sermon eval set is still small at 35 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
-- The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
-- The optional ChromaDB and RAGAS paths are now verified with a real smoke config, but I have not folded them into the main published benchmark tables
-- The doc-level reranking studies are useful for failure analysis, but even after the soft rerank tie-break fix they are still sermon-only experiments, not a new default path
-- The title-aware chunk study is strong for dense sermon retrieval, but it hurts BM25 badly, so right now it is still an opt-in study instead of replacing the shared sermon baseline
-- The metadata-rerank study is still the strongest local sermon path, but it is still a sermon-specific heuristic over a small label set rather than a generic retrieval recipe
-- The recommended sermon dense config is genuinely the best current path, but it is still built from sermon-specific heuristics over a small label set
-- The default sermon path now excludes two confirmed duplicate transcript files, but there may still be other local transcript hygiene issues that are not yet labeled
-- The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
-- The current `ragas` / `langchain` stack emits a Python 3.14 warning during the optional run, even though the config finishes successfully
+- The sermon eval set is still only `35` labeled questions, so it is good for iteration but still too small to call a stable benchmark
+- The answer-quality score is still a simple overlap-style proxy, not a full generated-answer evaluation
+- The strongest sermon path today uses sermon-specific hints, so I treat it as a practical local solution, not a universal retrieval recipe
+- The optional ChromaDB and RAGAS paths are real and runnable, but they are still side paths compared with the main FAISS-based benchmark flow
+- There are probably still local transcript hygiene issues beyond the two duplicate files I already excluded from the default staged corpus
+- This repo is intentionally stronger on evaluation than on end-user product design; that trade-off is deliberate, but it is still a limitation
 
 ## Future Work
 
-- Expand the sermon label set toward the original 20-50 question target with tighter coverage across more topics
-- Expand the sermon label set again now that the cleaned corpus and series-aware rerank no longer leave an obvious single-query miss
-- Revisit the local sermon source set again if more near-duplicate transcript files show up during later labeling
-- Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
-- Tune the soft `doc_repeat_penalty` setting or try chunk-group reranking so repeated-sermon hits do not crowd out better alternatives
-- Split the sermon path into retrieval-mode-specific configs if the title-aware dense variant keeps outperforming the one-size-fits-all baseline
-- Decide whether the sermon metadata rerank should stay a study config or become the dense sermon default after the label set gets larger
-- If the sermon label set grows, revisit whether `configs/sermon_dense_recommended.yaml` should replace the current sermon dense baseline
-- Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
-- Extend CI if needed with result-generation smoke checks after model caching is set up
-- Add a stronger RAGAS answer metric beyond the current id-based context recall hook
-- Compare more embedding models if the simple baseline stays stable
+- Keep expanding the sermon label set so the current strong local path gets pressure-tested on something harder than the current `35` questions
+- Use this evaluation pipeline as the retrieval-analysis base for a future sermon-specific model or fine-tuning path, instead of jumping straight back to a weak QA demo
+- Revisit the sermon source set again if more near-duplicate transcript files show up during later labeling
+- Add a clearer side-by-side summary for HotpotQA vs sermon so cross-dataset transfer is easier to explain
+- Compare more embedding models and maybe a stronger answer metric once the current benchmark path feels stable
 
 ## License
 

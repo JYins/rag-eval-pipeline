@@ -4,7 +4,7 @@
 
 - Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the current sermon main path has now been pressure-tested on 35 labeled questions
 - Next step: keep expanding the sermon label set from this cleaner 13-doc baseline instead of assuming the current full-hit result is already stable enough
-- Small note this round: the main sermon configs were re-run on 35 labels, while the slower doc-dedupe / doc-penalty / ChromaDB study artifacts are still kept as the earlier 28-question checkpoint until those reruns finish cleanly
+- Small note this round: the main sermon configs are already refreshed on 35 labels, while the slower doc-dedupe / doc-penalty / ChromaDB study artifacts are still kept as the earlier 28-question checkpoint for now
 - Next phase: add another batch of discriminative sermon labels, especially around scripture-reference prompts and same-series day questions
 
 ## Last Step
@@ -15,7 +15,8 @@
   - baseline dense: Recall@3 `0.7429`, MRR `0.6652`, Hit Rate `0.8000`
   - title-aware dense: Recall@3 `0.9143`, MRR `0.7810`, Hit Rate `0.9143`
   - metadata-reranked dense / recommended dense: Recall@3 `1.0000`, MRR `0.9333`, Hit Rate `1.0000`
-- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md) so the sermon narrative matches the new 35-question checkpoint
+- Kept the slower sermon-only study artifacts honest as a visible 28-question checkpoint instead of silently replacing them with partial reruns
+- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md), [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/docs/design_decisions.md), and [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md) so the sermon narrative matches the current 35-question main path plus the older 28-question slow-study checkpoint
 
 - Added a small `series_hint_boost` path to [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and wired it through [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) plus [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
 - Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for series-aware reranking so `第四天布道会` does not get hijacked by `第四讲`

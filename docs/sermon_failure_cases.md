@@ -6,7 +6,7 @@ Generated from the latest completed optional ChromaDB + RAGAS smoke run on March
 python scripts/run_eval.py --config configs/sermon_chromadb_ragas.yaml
 ```
 
-Run summary on the earlier 28-question sermon checkpoint:
+Run summary on the current completed ChromaDB checkpoint, which is still the earlier 28-question sermon set:
 
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
@@ -18,6 +18,7 @@ Main patterns from this smoke run:
 - The misses are still mostly bridge or scripture-reference questions where many sermons share similar church vocabulary.
 - The optional `ragas_context_recall` lines up closely with `Recall@3` here because both are using gold document ids rather than generated answers.
 - Excluding the two confirmed duplicate sermon files made the remaining miss set cleaner, but the ChromaDB smoke run still misses a few true retrieval cases.
+- The faster FAISS-based sermon main path has already moved on to 35 labels, so this file is intentionally documenting the slower Chroma checkpoint rather than pretending every sermon study is refreshed at the same speed.
 
 ## Case 1: The retriever stayed near doctrine language but missed the suffering sermon
 
@@ -113,4 +114,5 @@ Why this failed:
 - The hardest sermon misses are not random. They cluster around repeated doctrine language, Bible references, and series-level overlap.
 - The duplicate-file cleanup was worth doing first, because it removed a fake source of error and improved the stronger dense sermon runs.
 - Another improvement is to keep expanding the label set with more discriminative question wording, especially for scripture-reference prompts.
+- For the current repo state, the right reading is: recommended dense is the strongest fast FAISS path on 35 questions, while ChromaDB + RAGAS is still a smaller optional checkpoint for inspection.
 - The main sermon path has already moved on to a 35-question checkpoint, so this note stays here mainly as a record of where the optional ChromaDB study was still weak.
