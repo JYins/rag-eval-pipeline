@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import re
 from copy import deepcopy
 from itertools import product
 from traceback import format_exception_only
@@ -20,6 +21,25 @@ from src.retriever_dense import load_encoder
 from src.retriever_dense import build_dense_retriever
 from src.retriever_hybrid import build_hybrid_retriever
 from src.utils import load_yaml, resolve_path, save_csv, save_json
+
+
+ORDINAL_RE = re.compile(r"第([0-9一二三四五六七八九十两]+)(天|讲|篇)")
+DAY_RE = re.compile(r"day\s*([0-9]+)", re.IGNORECASE)
+OPENING_HINTS = ("开头", "一开始", "开场", "刚开始")
+LAST_HINTS = ("最后一天", "最后一讲", "最后一篇")
+CJK_NUMBERS = {
+    "一": 1,
+    "二": 2,
+    "两": 2,
+    "三": 3,
+    "四": 4,
+    "五": 5,
+    "六": 6,
+    "七": 7,
+    "八": 8,
+    "九": 9,
+    "十": 10,
+}
 
 
 def chunk_kwargs_from_config(config: dict[str, Any]) -> dict[str, Any]:
@@ -173,6 +193,8 @@ def search_docs(retriever: Any, query: str, config: dict[str, Any]) -> list[dict
     retrieve_k = max(top_k, 5)
     if config.get("dedupe_docs"):
         retrieve_k = max(top_k * 5, 10)
+    if config.get("metadata_rerank"):
+        retrieve_k = max(retrieve_k, top_k * 10, 20)
     if config["retrieval_mode"] == "hybrid":
         return retriever.search(query, top_k=retrieve_k, candidate_k=retrieve_k)
     return retriever.search(query, top_k=retrieve_k)
@@ -236,6 +258,95 @@ def rerank_results_with_doc_penalty(
     return picked
 
 
+def parse_small_number(value: str) -> int | None:
+    if not value:
+        return None
+    if value.isdigit():
+        return int(value)
+    if value in CJK_NUMBERS:
+        return CJK_NUMBERS[value]
+    if value == "十一":
+        return 11
+    if len(value) == 2 and value.startswith("十") and value[1] in CJK_NUMBERS:
+        return 10 + CJK_NUMBERS[value[1]]
+    if len(value) == 2 and value.endswith("十") and value[0] in CJK_NUMBERS:
+        return CJK_NUMBERS[value[0]] * 10
+    return None
+
+
+def collect_title_numbers(text: str) -> set[int]:
+    numbers = set()
+    for match in ORDINAL_RE.finditer(text):
+        value = parse_small_number(match.group(1))
+        if value is not None:
+            numbers.add(value)
+    for match in DAY_RE.finditer(text):
+        numbers.add(int(match.group(1)))
+    return numbers
+
+
+def query_has_last_hint(query: str) -> bool:
+    return any(item in query for item in LAST_HINTS)
+
+
+def query_has_opening_hint(query: str) -> bool:
+    return any(item in query for item in OPENING_HINTS)
+
+
+def rerank_results_with_metadata(
+    query: str,
+    results: list[dict[str, Any]],
+    top_k: int,
+    metadata_config: dict[str, Any],
+) -> list[dict[str, Any]]:
+    title_hint_boost = float(metadata_config.get("title_hint_boost", 0.0))
+    opening_chunk_boost = float(metadata_config.get("opening_chunk_boost", 0.0))
+    opening_chunk_window = int(metadata_config.get("opening_chunk_window", 10))
+
+    query_numbers = collect_title_numbers(query)
+    last_hint = query_has_last_hint(query)
+    opening_hint = query_has_opening_hint(query)
+
+    title_numbers = []
+    for item in results:
+        title_numbers.extend(collect_title_numbers(item.get("title", item["doc_id"])))
+    max_title_number = max(title_numbers) if title_numbers else None
+
+    scored_rows = []
+    for item in results:
+        row = dict(item)
+        boost = 0.0
+        item_numbers = collect_title_numbers(row.get("title", row["doc_id"]))
+        if title_hint_boost > 0 and query_numbers & item_numbers:
+            boost += title_hint_boost
+        elif title_hint_boost > 0 and last_hint and max_title_number and max_title_number in item_numbers:
+            boost += title_hint_boost
+
+        if opening_hint and opening_chunk_boost > 0:
+            chunk_index = int(row.get("chunk_index", 999999))
+            if chunk_index <= opening_chunk_window:
+                boost += opening_chunk_boost
+
+        row["metadata_boost"] = boost
+        row["effective_rank"] = float(row["rank"]) - boost
+        scored_rows.append(row)
+
+    scored_rows.sort(
+        key=lambda item: (
+            item["effective_rank"],
+            -item["metadata_boost"],
+            item["rank"],
+        )
+    )
+
+    picked = []
+    for index, item in enumerate(scored_rows[:top_k], start=1):
+        row = dict(item)
+        row["rank"] = index
+        picked.append(row)
+    return picked
+
+
 def trim_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     rows = []
     for item in results:
@@ -252,6 +363,10 @@ def trim_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
             row["hybrid_score"] = item["hybrid_score"]
             row["bm25_rank"] = item.get("bm25_rank")
             row["dense_rank"] = item.get("dense_rank")
+        if "metadata_boost" in item:
+            row["metadata_boost"] = item["metadata_boost"]
+        if "effective_rank" in item:
+            row["effective_rank"] = item["effective_rank"]
         rows.append(row)
     return rows
 
@@ -284,6 +399,13 @@ def run_experiment(
                 results,
                 top_k=int(config.get("top_k", 3)),
                 penalty=float(config["doc_repeat_penalty"]),
+            )
+        elif config.get("metadata_rerank"):
+            results = rerank_results_with_metadata(
+                query=row["question"],
+                results=results,
+                top_k=int(config.get("top_k", 3)),
+                metadata_config=dict(config["metadata_rerank"]),
             )
         gold_doc_ids = get_gold_doc_ids(row)
         retrieval_scores = score_query(results, gold_doc_ids)

@@ -1,7 +1,9 @@
 import src.experiment_runner as experiment_runner
 from src.experiment_runner import (
+    collect_title_numbers,
     dedupe_results_by_doc_id,
     load_experiments,
+    rerank_results_with_metadata,
     rerank_results_with_doc_penalty,
     run_eval,
     run_experiment,
@@ -58,6 +60,14 @@ def test_load_experiments_reads_title_aware_config() -> None:
     assert payload["experiments"][2]["chunking"]["include_title"] is True
 
 
+def test_load_experiments_reads_metadata_rerank_config() -> None:
+    payload = load_experiments("configs/sermon_metadata_rerank.yaml")
+
+    assert payload["dataset"]["name"] == "sermon"
+    assert len(payload["experiments"]) == 2
+    assert payload["experiments"][1]["metadata_rerank"]["title_hint_boost"] == 6.0
+
+
 def test_dedupe_results_by_doc_id_keeps_best_chunk_per_doc() -> None:
     results = [
         {"chunk_id": "a_1", "doc_id": "doc_a", "rank": 1, "text": "a1"},
@@ -98,6 +108,47 @@ def test_rerank_results_with_doc_penalty_prefers_new_doc_on_tie() -> None:
 
     assert [item["chunk_id"] for item in picked] == ["a_1", "b_1", "c_1", "a_2"]
     assert [item["rank"] for item in picked] == [1, 2, 3, 4]
+
+
+def test_collect_title_numbers_reads_day_and_ordinal_hints() -> None:
+    picks = collect_title_numbers("[圣经讲座] 第六篇_ 金松奎 P_2022 福音布道会_Day6_原文")
+
+    assert picks == {6}
+
+
+def test_rerank_results_with_metadata_boosts_last_day_doc() -> None:
+    results = [
+        {"chunk_id": "day5", "doc_id": "doc_day5", "title": "第五篇 Day5", "rank": 1, "chunk_index": 20, "text": "x"},
+        {"chunk_id": "day4", "doc_id": "doc_day4", "title": "第四篇 Day4", "rank": 2, "chunk_index": 20, "text": "x"},
+        {"chunk_id": "day6", "doc_id": "doc_day6", "title": "第六篇 Day6", "rank": 7, "chunk_index": 30, "text": "x"},
+    ]
+
+    picked = rerank_results_with_metadata(
+        query="最后一天布道会说了什么",
+        results=results,
+        top_k=3,
+        metadata_config={"title_hint_boost": 6.0},
+    )
+
+    assert [item["chunk_id"] for item in picked] == ["day6", "day5", "day4"]
+    assert picked[0]["metadata_boost"] == 6.0
+
+
+def test_rerank_results_with_metadata_boosts_opening_chunks() -> None:
+    results = [
+        {"chunk_id": "late", "doc_id": "doc_b", "title": "第二讲", "rank": 1, "chunk_index": 40, "text": "x"},
+        {"chunk_id": "early", "doc_id": "doc_a", "title": "第一讲", "rank": 7, "chunk_index": 1, "text": "x"},
+    ]
+
+    picked = rerank_results_with_metadata(
+        query="哪一篇讲道开头提到这个内容",
+        results=results,
+        top_k=2,
+        metadata_config={"opening_chunk_boost": 8.0, "opening_chunk_window": 3},
+    )
+
+    assert [item["chunk_id"] for item in picked] == ["early", "late"]
+    assert picked[0]["metadata_boost"] == 8.0
 
 
 def test_run_experiment_reuses_retriever_for_same_docs(monkeypatch) -> None:

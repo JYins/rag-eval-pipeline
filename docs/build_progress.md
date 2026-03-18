@@ -3,18 +3,21 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A and the first sermon extension are runnable, with optional ChromaDB + RAGAS hooks now wired into the eval path
-- Next step: inspect the two remaining dense title-aware misses and decide whether they need section-level reranking or a separate dense-only sermon config
-- Small fix this round: added an opt-in `include_title` chunking flag so sermon titles can be prefixed into chunk text during retrieval
+- Next step: decide whether the metadata-aware dense sermon path should stay as a study or become the dense sermon default after the label set grows
+- Small fix this round: added an opt-in metadata rerank so title/day hints and opening-chunk cues can reorder dense sermon candidates
 - Next phase: tighten the labeled questions where they are too easy or too noisy, then rerun the sermon comparison set
 
 ## Last Step
 
-- Added `include_title` support in [`src/chunking.py`](/Users/yinshi/Documents/breadrag/src/chunking.py) and wired it from config through [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py)
-- Added [`configs/sermon_title_aware.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_title_aware.yaml) and exposed it as `Sermon (Title-Aware Study)` in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
-- Added regression coverage in [`tests/test_chunking.py`](/Users/yinshi/Documents/breadrag/tests/test_chunking.py), [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py), and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py)
-- Verified the real sermon title-aware run locally:
-  - dense title-aware: Recall@3 `0.9048`, MRR `0.7817`, Hit Rate `0.9524`
-  - BM25 title-aware got much worse, so the title prefix stays an opt-in study rather than a shared default
+- Added metadata-aware reranking in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) with two explicit sermon cues:
+  - title/day hint boost like `第六篇`, `Day6`, `最后一天`
+  - opening-chunk boost when the query asks about a sermon opening
+- Added [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) and exposed it as `Sermon (Metadata Rerank Study)` in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py)
+- Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) and [`tests/test_streamlit_app.py`](/Users/yinshi/Documents/breadrag/tests/test_streamlit_app.py) for the new study and boost logic
+- Verified the real sermon metadata-rerank run locally:
+  - base dense title-aware: Recall@3 `0.9048`, MRR `0.7817`, Hit Rate `0.9524`
+  - metadata-reranked dense: Recall@3 `1.0000`, MRR `0.8889`, Hit Rate `1.0000`
+  - `sermon_004` is fixed by the opening-chunk boost and `sermon_021` is fixed by the day/title hint boost
 
 ## Previous Step
 
