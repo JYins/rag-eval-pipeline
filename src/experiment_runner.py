@@ -174,6 +174,10 @@ def trim_results(results: list[dict[str, Any]]) -> list[dict[str, Any]]:
     return rows
 
 
+def build_docs_key(docs: list[dict[str, Any]]) -> tuple[tuple[str, str], ...]:
+    return tuple((doc["doc_id"], doc["text"]) for doc in docs)
+
+
 def run_experiment(
     rows: list[dict[str, Any]],
     config: dict[str, Any],
@@ -182,9 +186,13 @@ def run_experiment(
     query_rows = []
     metric_rows = []
     answer_rows = []
+    retriever_cache: dict[tuple[tuple[str, str], ...], Any] = {}
 
     for row in rows:
-        retriever = build_retriever(row["documents"], config, encoder_cache)
+        docs_key = build_docs_key(row["documents"])
+        if docs_key not in retriever_cache:
+            retriever_cache[docs_key] = build_retriever(row["documents"], config, encoder_cache)
+        retriever = retriever_cache[docs_key]
         results = search_docs(retriever, row["question"], config)
         gold_doc_ids = get_gold_doc_ids(row)
         retrieval_scores = score_query(results, gold_doc_ids)

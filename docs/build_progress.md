@@ -3,15 +3,15 @@
 ## Current Step
 
 - Current repo status: HotpotQA Phase A is documented through the full 15-config run
-- Next step: run the labeled sermon baseline through the dashboard and inspect misses
-- Next phase: add a cached multilingual dense option back into the sermon config
+- Next step: inspect sermon dense / hybrid misses in the dashboard and tighten the labeled questions where they are too easy or too noisy
+- Next phase: expand the sermon eval set toward the full 20-50 question target
 
 ## Last Step
 
-- Filled [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv) with 21 real labeled sermon questions
-- Kept [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) as a runnable local BM25 baseline in the current offline environment
-- Fixed [`scripts/prepare_sermon_data.py`](/Users/yinshi/Documents/breadrag/scripts/prepare_sermon_data.py) so sermon staging stays idempotent instead of duplicating symlinked docs
-- Ran `python scripts/run_eval.py --config configs/sermon.yaml` and generated the sermon result artifacts locally
+- Restored dense and hybrid sermon runs in [`configs/sermon.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon.yaml) with the multilingual MiniLM model
+- Added a dataset preset switch in [`app/streamlit_app.py`](/Users/yinshi/Documents/breadrag/app/streamlit_app.py) so the dashboard can jump between HotpotQA and sermon artifacts
+- Cached shared retrievers in [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) so repeated sermon docs do not rebuild indexes for every query
+- Verified the current sermon run locally: dense Recall@3 `0.7619`, MRR `0.7040`, Hit Rate `0.8571`
 
 ## History
 

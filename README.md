@@ -142,6 +142,8 @@ python scripts/run_eval.py --config configs/default.yaml --limit 20
 streamlit run app/streamlit_app.py
 ```
 
+Use the sidebar `Dataset preset` switch to jump between the default HotpotQA artifacts and the sermon result files.
+
 ### 7. Prepare sermon transcripts
 
 ```bash
@@ -156,10 +158,16 @@ This stages the local transcript `.docx` files into `data/raw/sermons/`, keeps t
 python scripts/run_eval.py --config configs/sermon.yaml
 ```
 
-This runs the current sermon BM25 baseline on the labeled transcript questions and writes:
+This runs the current sermon comparison set on the labeled transcript questions and writes:
 
 - `results/sermon_metrics_summary.csv`
 - `results/sermon_per_query_results.json`
+
+The current sermon config compares:
+
+- BM25 sparse retrieval
+- multilingual dense retrieval with `paraphrase-multilingual-MiniLM-L12-v2`
+- multilingual hybrid retrieval
 
 ## Configuration
 
@@ -180,7 +188,7 @@ Current setup:
 
 - `configs/default.yaml` is the standard `500`-sample HotpotQA run
 - `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval on HotpotQA
-- `configs/sermon.yaml` is the current runnable Phase B baseline over the labeled sermon questions
+- `configs/sermon.yaml` compares sparse, dense, and hybrid retrieval on the labeled sermon questions
 - `--limit` can override dataset size for fast local debugging
 
 ## Metrics & Results
@@ -219,6 +227,14 @@ Average across the whole 15-config HotpotQA grid:
 | `bm25` | `0.6243` | `0.8138` | `0.9500` |
 | `dense` | `0.6893` | `0.8809` | `0.9787` |
 | `hybrid` | `0.7235` | `0.8791` | `0.9897` |
+
+Current sermon run highlights on the 21 labeled transcript questions:
+
+| config | Recall@3 | MRR | Hit Rate |
+|---|---:|---:|---:|
+| `bm25_sentence_top3_sermon` | `0.2857` | `0.2222` | `0.3810` |
+| `dense_sentence_top3_sermon_multilingual` | `0.7619` | `0.7040` | `0.8571` |
+| `hybrid_sentence_top3_sermon_multilingual` | `0.6190` | `0.4048` | `0.7143` |
 
 ## Example Output
 
@@ -265,15 +281,15 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 ## Limitations
 
-- The sermon eval currently runs as a BM25 baseline in this repo because the multilingual dense model is not bundled locally
+- The sermon eval set is still small at 21 labeled questions, so the numbers are useful for iteration but not yet a stable benchmark
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
-- The dashboard already works for any result file pair, but there is not a separate sermon-only summary view yet
+- The first multilingual sermon run needs a Hugging Face download unless the model is already cached locally
 
 ## Future Work
 
-- Add a cached multilingual dense model option back into the sermon config
-- Add sermon results into the dashboard as a second dataset comparison view
+- Expand the sermon label set toward the original 20-50 question target with tighter coverage across more topics
+- Add a side-by-side dataset comparison summary for HotpotQA vs sermon runs
 - Try a larger HotpotQA run in the `1000-2000` range once the local benchmark path feels stable
 - Extend CI if needed with result-generation smoke checks after model caching is set up
 - Add optional RAGAS-based answer evaluation

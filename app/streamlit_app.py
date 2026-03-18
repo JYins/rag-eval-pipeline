@@ -17,6 +17,8 @@ if str(ROOT_DIR) not in sys.path:
 
 DEFAULT_METRICS_PATH = ROOT_DIR / "results" / "metrics_summary.csv"
 DEFAULT_PER_QUERY_PATH = ROOT_DIR / "results" / "per_query_results.json"
+SERMON_METRICS_PATH = ROOT_DIR / "results" / "sermon_metrics_summary.csv"
+SERMON_PER_QUERY_PATH = ROOT_DIR / "results" / "sermon_per_query_results.json"
 
 
 @st.cache_data
@@ -28,6 +30,12 @@ def load_metrics(path: str) -> pd.DataFrame:
 def load_queries(path: str) -> list[dict[str, Any]]:
     with open(path, "r", encoding="utf-8") as f:
         return json.load(f)
+
+
+def get_dataset_paths(dataset_name: str) -> tuple[Path, Path]:
+    if dataset_name == "Sermon":
+        return SERMON_METRICS_PATH, SERMON_PER_QUERY_PATH
+    return DEFAULT_METRICS_PATH, DEFAULT_PER_QUERY_PATH
 
 
 def build_failure_rows(rows: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -163,12 +171,16 @@ def main() -> None:
     st.title("RAG Evaluation Dashboard")
     st.caption("Compare retrieval configs, inspect single-query behavior, and review failure cases.")
 
-    metrics_path = st.sidebar.text_input("Metrics CSV", str(DEFAULT_METRICS_PATH))
-    per_query_path = st.sidebar.text_input("Per-query JSON", str(DEFAULT_PER_QUERY_PATH))
+    dataset_name = st.sidebar.selectbox("Dataset preset", options=["HotpotQA", "Sermon"])
+    default_metrics_path, default_per_query_path = get_dataset_paths(dataset_name)
+
+    metrics_path = st.sidebar.text_input("Metrics CSV", str(default_metrics_path))
+    per_query_path = st.sidebar.text_input("Per-query JSON", str(default_per_query_path))
 
     metrics_df = load_metrics(metrics_path)
     query_rows = load_queries(per_query_path)
 
+    st.sidebar.markdown(f"**Dataset preset:** {dataset_name}")
     st.sidebar.markdown(f"**Configs loaded:** {metrics_df.shape[0]}")
     st.sidebar.markdown(f"**Query rows loaded:** {len(query_rows)}")
 
