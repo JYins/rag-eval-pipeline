@@ -59,6 +59,7 @@ rag-eval-pipeline/
 ├── app/
 │   └── streamlit_app.py
 ├── tests/
+│   ├── test_data_loader.py
 │   ├── test_chunking.py
 │   ├── test_retrieval.py
 │   └── test_metrics.py
@@ -107,6 +108,7 @@ python src/retriever_dense.py --sample-index 0 --top-k 3 --strategy sentence --m
 ### 4. Run tests
 
 ```bash
+pytest tests/test_data_loader.py
 pytest tests/test_chunking.py
 pytest tests/test_retrieval.py
 pytest tests/test_metrics.py
@@ -150,7 +152,7 @@ Main files:
 Current setup:
 
 - `configs/default.yaml` is the standard `500`-sample run
-- `configs/experiment_grid.yaml` expands a larger config set
+- `configs/experiment_grid.yaml` expands to compare 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval
 - `--limit` can override dataset size for fast local debugging
 
 ## Metrics & Results
@@ -170,7 +172,7 @@ Current standard-run artifacts:
 - `results/per_query_results.json`
 - `results/failure_cases.md`
 
-Current 500-sample comparison table:
+Current 500-sample standard-run comparison table:
 
 | config | retrieval_mode | embedding_model | Recall@3 | MRR | Hit Rate |
 |---|---|---|---:|---:|---:|
@@ -220,15 +222,15 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 ## Limitations
 
 - The sermon transcript dataset has not started yet
-- The default experiment currently compares retrieval modes on sentence-based chunking first; the wider chunking comparison still needs to be expanded in config
+- The committed standard-run summary still highlights the smaller default comparison; the full grid should be run and documented separately because it is much heavier
 - The answer-quality score is still a cheap proxy based on token overlap, not a full generated-answer evaluation
 - `chromadb` and `ragas` are listed in dependencies, but they are not wired into the current code path yet
 - CI is now checked in with GitHub Actions for `ruff` + `pytest`
 
 ## Future Work
 
-- Expand the standard experiment grid to compare all 3 chunking strategies directly
 - Run and document the second embedding model on the same 500-sample setup
+- Run and document the full experiment grid across all 3 chunking strategies
 - Extend CI if needed with result-generation smoke checks after model caching is set up
 - Extend the same framework to Chinese sermon transcripts
 - Add optional RAGAS-based answer evaluation

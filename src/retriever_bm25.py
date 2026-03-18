@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """BM25 retrieval baseline."""
 
 from __future__ import annotations

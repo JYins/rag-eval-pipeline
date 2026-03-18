@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """CLI entry for running retrieval experiments."""
 
 from __future__ import annotations

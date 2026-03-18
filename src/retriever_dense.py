@@ -1,3 +1,5 @@
+# ruff: noqa: E402
+
 """Dense retrieval with sentence-transformers + FAISS."""
 
 from __future__ import annotations

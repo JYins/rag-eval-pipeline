@@ -2,18 +2,17 @@
 
 ## Current Step
 
-- Current repo status: Commit 10 in progress
-- Next step: final verification + commit
+- Current repo status: Commit 10 finished
+- Next step: do not start sermons until the HotpotQA comparison space is documented cleanly
 - Next phase: stop after Phase A cleanup, do not start sermons yet
 
 ## Last Step
 
-- Commit 10 work started
-- Added GitHub Actions workflow in [`.github/workflows/ci.yml`](/Users/yinshi/Documents/breadrag/.github/workflows/ci.yml)
-- Cleaned README CI status and documented dense model download requirement
-- Improved dense model load failure message in [`src/retriever_dense.py`](/Users/yinshi/Documents/breadrag/src/retriever_dense.py)
-- Verified tests with `./.venv/bin/pytest -q`
-- Verified current environment cannot run dense eval without network or cached models
+- Commit 10 finished
+- Added data-loader coverage in [`tests/test_data_loader.py`](/Users/yinshi/Documents/breadrag/tests/test_data_loader.py)
+- Expanded [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml) to 15 configs covering 3 chunking strategies, 2 embedding models, and sparse/dense/hybrid retrieval
+- Tightened README so the documented comparison scope matches the config story
+- Verified with `ruff check .` and `pytest -q`
 
 ## History
 
@@ -81,3 +80,11 @@
 - Cleaned README to match the actual runnable state of the repo
 - Added design decisions with current retrieval trade-offs
 - Added `results/failure_cases.md` based on the 500-sample standard run
+
+### Commit 10
+
+- Message: `add ci tests and final cleanup`
+- Added CI workflow
+- Improved dense model load error message
+- Added missing data-loading test coverage
+- Tightened final comparison config coverage

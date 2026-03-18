@@ -8,12 +8,26 @@ output:
   per_query_path: results/per_query_results.json
 
 experiments:
+  - name: bm25_fixed_top3
+    retrieval_mode: bm25
+    top_k: 3
+    chunking:
+      strategy: fixed
+      chunk_size: 120
+      overlap: 20
+
   - name: bm25_sentence_top3
     retrieval_mode: bm25
     top_k: 3
     chunking:
       strategy: sentence
       max_sentences: 2
+
+  - name: bm25_paragraph_top3
+    retrieval_mode: bm25
+    top_k: 3
+    chunking:
+      strategy: paragraph
 
 base_experiment:
   top_k: 3
@@ -22,6 +36,10 @@ base_experiment:
     max_sentences: 2
 
 grid:
+  chunk_strategy:
+    - fixed
+    - sentence
+    - paragraph
   retrieval_mode:
     - dense
     - hybrid
