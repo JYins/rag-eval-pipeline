@@ -20,3 +20,7 @@ sermon处理文档/
 # local app files
 .DS_Store
 *.log
+
+# local agent instructions
+AGENTS.md
+agents.md
