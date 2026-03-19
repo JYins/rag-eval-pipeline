@@ -356,43 +356,43 @@ Average across the whole 15-config HotpotQA grid:
 | `dense` | `0.6893` | `0.8809` | `0.9787` |
 | `hybrid` | `0.7235` | `0.8791` | `0.9897` |
 
-Current sermon baseline highlights on the 35 labeled transcript questions:
+Current sermon baseline highlights on the 42 labeled transcript questions:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
-| `bm25_sentence_top3_sermon` | `0.2000` | `0.1876` | `0.3714` |
-| `dense_sentence_top3_sermon_multilingual` | `0.7429` | `0.6652` | `0.8000` |
-| `hybrid_sentence_top3_sermon_multilingual` | `0.6000` | `0.3643` | `0.6286` |
+| `bm25_sentence_top3_sermon` | `0.1667` | `0.1563` | `0.3095` |
+| `dense_sentence_top3_sermon_multilingual` | `0.6905` | `0.6258` | `0.7381` |
+| `hybrid_sentence_top3_sermon_multilingual` | `0.5714` | `0.3393` | `0.5952` |
 
-Current title-aware sermon study on the same 35 labeled questions:
-
-| config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
-|---|---:|---:|---:|---:|
-| `bm25_sentence_top3_sermon_title_aware` | `0.0571` | `0.0571` | `0.0571` | |
-| `dense_sentence_top3_sermon_multilingual_title_aware` | `0.9143` | `0.7810` | `0.9143` | |
-| `hybrid_sentence_top3_sermon_multilingual_title_aware` | `0.7143` | `0.4143` | `0.8286` | |
-
-Current metadata-rerank and recommended dense sermon runs on the same 35 labeled questions:
+Current title-aware sermon study on the same 42 labeled questions:
 
 | config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
 |---|---:|---:|---:|---:|
-| `dense_sentence_top3_sermon_multilingual_title_aware_base` | `0.9143` | `0.7810` | `0.9143` | |
-| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9333` | `1.0000` | |
-| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9333` | `1.0000` | |
+| `bm25_sentence_top3_sermon_title_aware` | `0.0476` | `0.0476` | `0.0476` | |
+| `dense_sentence_top3_sermon_multilingual_title_aware` | `0.8571` | `0.7230` | `0.8810` | |
+| `hybrid_sentence_top3_sermon_multilingual_title_aware` | `0.6429` | `0.3750` | `0.7619` | |
 
-Current optional sermon-only studies on the same 35 labeled questions:
+Current metadata-rerank and recommended dense sermon runs on the same 42 labeled questions:
+
+| config | Recall@3 | MRR | Hit Rate | RAGAS Context Recall |
+|---|---:|---:|---:|---:|
+| `dense_sentence_top3_sermon_multilingual_title_aware_base` | `0.8571` | `0.7230` | `0.8810` | |
+| `dense_sentence_top3_sermon_multilingual_metadata_rerank` | `1.0000` | `0.9325` | `1.0000` | |
+| `dense_sentence_top3_sermon_multilingual_recommended` | `1.0000` | `0.9325` | `1.0000` | |
+
+Current optional sermon-only studies on the same 42 labeled questions:
 
 | config | Recall@3 | MRR | Hit Rate |
 |---|---:|---:|---:|
-| `bm25_sentence_top3_sermon_dedup` | `0.2000` | `0.1476` | `0.2000` |
-| `dense_sentence_top3_sermon_multilingual_dedup` | `0.8000` | `0.6762` | `0.8000` |
-| `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.6000` | `0.3571` | `0.6000` |
-| `bm25_sentence_top3_sermon_doc_penalty` | `0.2000` | `0.1476` | `0.2000` |
-| `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7714` | `0.6667` | `0.7714` |
-| `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.6000` | `0.3571` | `0.6000` |
-| `dense_sentence_top3_sermon_chromadb_ragas` | `0.7714` | `0.6429` | `0.7714` |
+| `bm25_sentence_top3_sermon_dedup` | `0.1667` | `0.1230` | `0.1667` |
+| `dense_sentence_top3_sermon_multilingual_dedup` | `0.7381` | `0.6349` | `0.7381` |
+| `hybrid_sentence_top3_sermon_multilingual_dedup` | `0.5714` | `0.3333` | `0.5714` |
+| `bm25_sentence_top3_sermon_doc_penalty` | `0.1667` | `0.1230` | `0.1667` |
+| `dense_sentence_top3_sermon_multilingual_doc_penalty` | `0.7143` | `0.6270` | `0.7143` |
+| `hybrid_sentence_top3_sermon_multilingual_doc_penalty` | `0.5714` | `0.3333` | `0.5714` |
+| `dense_sentence_top3_sermon_chromadb_ragas` | `0.6905` | `0.5881` | `0.7143` |
 
-This is why both doc-level reranking behaviors still stay opt-in. After refreshing them on the same 35-question set, they still do not beat the main recommended dense path, so they remain useful for inspection rather than as defaults. The ChromaDB + RAGAS run is also fully refreshed now, but it is still clearly weaker than the FAISS-based recommended dense path on the newer day-specific sermon questions.
+This is why both doc-level reranking behaviors still stay opt-in. After refreshing them on the same 42-question set, they still do not beat the main recommended dense path, so they remain useful for inspection rather than as defaults. The ChromaDB + RAGAS run also drops further on the newly added day-specific seminar questions, which makes the FAISS-based recommended path look more clearly like the stable local choice.
 
 This is the clearest sermon-specific gain so far. For multilingual dense retrieval, simply including the sermon title in each chunk helps the model anchor verse, sermon-series, and day-based questions much better. It is not a universal trick though, because BM25 gets much worse when the titles dominate token overlap.
 
@@ -401,7 +401,7 @@ This is still the cleanest sermon retrieval path so far. After excluding the two
 - `sermon_004`: query asks about the opening of a sermon, so an early-chunk boost pulls the correct sermon to rank 1
 - `sermon_021`: query asks about the last day of the seminar, so a day/title hint boosts `Day6` over semantically similar `Day4` / `Day5` candidates
 
-I keep the recommended dense path as a separate config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path on the current 35-question set.
+I keep the recommended dense path as a separate config instead of silently rewriting the shared sermon baseline. That way the repo still shows the honest cross-mode baseline, while also giving one direct command for the best current sermon dense path on the current 42-question set.
 
 ## Example Output
 
@@ -451,7 +451,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 ## Limitations
 
-- The sermon eval set is still only `35` labeled questions, so it is good for iteration but still too small to call a stable benchmark
+- The sermon eval set is still only `42` labeled questions, so it is good for iteration but still too small to call a stable benchmark
 - The answer-quality score is still a simple overlap-style proxy, not a full generated-answer evaluation
 - The strongest sermon path today uses sermon-specific hints, so I treat it as a practical local solution, not a universal retrieval recipe
 - The optional ChromaDB and RAGAS paths are real and runnable, but they are still side paths compared with the main FAISS-based benchmark flow
@@ -460,7 +460,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 
 ## Future Work
 
-- Keep expanding the sermon label set so the current strong local path gets pressure-tested on something harder than the current `35` questions
+- Keep expanding the sermon label set so the current strong local path gets pressure-tested on something harder than the current `42` questions
 - Use this evaluation pipeline as the retrieval-analysis base for a future sermon-specific model or fine-tuning path, instead of jumping straight back to a weak QA demo
 - Revisit the sermon source set again if more near-duplicate transcript files show up during later labeling
 - Add a clearer side-by-side summary for HotpotQA vs sermon so cross-dataset transfer is easier to explain
