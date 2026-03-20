@@ -2,25 +2,25 @@
 
 ## Current Step
 
-- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the current sermon main path has now been pressure-tested on 42 labeled questions
+- Current repo status: HotpotQA Phase A and the sermon extension are runnable, and the current sermon main path has now been pressure-tested on 50 labeled questions
 - Next step: keep expanding the sermon label set from this cleaner 13-doc baseline instead of assuming the current full-hit result is already stable enough
-- Small note this round: the slower sermon-only studies are now also refreshed on 42 labels after forcing offline model loading through the local cache
+- Small note this round: the slower sermon-only studies are now also refreshed on 50 labels after forcing offline model loading through the local cache
 - Next phase: add another batch of discriminative sermon labels, especially around scripture-reference prompts and same-series day questions
 
 ## Last Step
 
-- Added 7 more high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), taking the local sermon eval set from 35 to 42 questions
+- Added 8 more high-confidence sermon labels in [`data/eval/sermon_questions.csv`](/Users/yinshi/Documents/breadrag/data/eval/sermon_questions.csv), taking the local sermon eval set from 42 to 50 questions
 - Re-ran the main sermon comparison configs plus the slower sermon-only study configs on the cleaned 13-doc staged corpus
-- Verified the current main-path results on 42 questions:
-  - baseline dense: Recall@3 `0.6905`, MRR `0.6258`, Hit Rate `0.7381`
-  - title-aware dense: Recall@3 `0.8571`, MRR `0.7230`, Hit Rate `0.8810`
-  - metadata-reranked dense / recommended dense: Recall@3 `1.0000`, MRR `0.9325`, Hit Rate `1.0000`
-- Verified the current slower study results on the same 42-question set:
-  - doc dedupe dense: Recall@3 `0.7381`, MRR `0.6349`, Hit Rate `0.7381`
-  - doc penalty dense: Recall@3 `0.7143`, MRR `0.6270`, Hit Rate `0.7143`
-  - ChromaDB + RAGAS dense: Recall@3 `0.6905`, MRR `0.5881`, Hit Rate `0.7143`, `ragas_context_recall=0.6905`
+- Verified the current main-path results on 50 questions:
+  - baseline dense: Recall@3 `0.7000`, MRR `0.6357`, Hit Rate `0.7400`
+  - title-aware dense: Recall@3 `0.8800`, MRR `0.7473`, Hit Rate `0.9000`
+  - metadata-reranked dense / recommended dense: Recall@3 `1.0000`, MRR `0.9433`, Hit Rate `1.0000`
+- Verified the current slower study results on the same 50-question set:
+  - doc dedupe dense: Recall@3 `0.7400`, MRR `0.6433`, Hit Rate `0.7400`
+  - doc penalty dense: Recall@3 `0.7200`, MRR `0.6367`, Hit Rate `0.7200`
+  - ChromaDB + RAGAS dense: Recall@3 `0.6800`, MRR `0.5880`, Hit Rate `0.7200`, `ragas_context_recall=0.6800`
 - Used `HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1` for these reruns so the local Hugging Face cache could be reused even when the machine could not resolve `huggingface.co`
-- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md) so the sermon narrative now matches a fully refreshed 42-question checkpoint
+- Updated [`README.md`](/Users/yinshi/Documents/breadrag/README.md) and [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md) so the sermon narrative now matches a fully refreshed 50-question checkpoint
 
 - Added a small `series_hint_boost` path to [`src/experiment_runner.py`](/Users/yinshi/Documents/breadrag/src/experiment_runner.py) and wired it through [`configs/sermon_metadata_rerank.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_metadata_rerank.yaml) plus [`configs/sermon_dense_recommended.yaml`](/Users/yinshi/Documents/breadrag/configs/sermon_dense_recommended.yaml)
 - Added regression coverage in [`tests/test_experiment_runner.py`](/Users/yinshi/Documents/breadrag/tests/test_experiment_runner.py) for series-aware reranking so `第四天布道会` does not get hijacked by `第四讲`
