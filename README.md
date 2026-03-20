@@ -175,85 +175,36 @@ The current sermon config compares:
 - multilingual dense retrieval with `paraphrase-multilingual-MiniLM-L12-v2`
 - multilingual hybrid retrieval
 
-### 9. Run the optional ChromaDB + RAGAS smoke config
+### 9. Optional sermon study configs
 
 ```bash
+# ChromaDB + RAGAS smoke path
 python scripts/run_eval.py --config configs/sermon_chromadb_ragas.yaml
-```
 
-This is a small real verification config for the optional stack:
-
-- dense backend: `chromadb`
-- optional metric: `ragas_context_recall`
-- output files:
-  - `results/sermon_chromadb_ragas_metrics.csv`
-  - `results/sermon_chromadb_ragas_per_query.json`
-
-### 10. Run the optional doc-dedupe study
-
-```bash
+# doc-level dedupe study
 python scripts/run_eval.py --config configs/sermon_doc_dedup.yaml
-```
 
-This keeps the main sermon baseline untouched and writes a separate study output for `dedupe_docs: true`:
-
-- `results/sermon_doc_dedup_metrics.csv`
-- `results/sermon_doc_dedup_per_query.json`
-
-### 11. Run the optional doc-penalty study
-
-```bash
+# softer doc repeat penalty study
 python scripts/run_eval.py --config configs/sermon_doc_penalty.yaml
-```
 
-This is a softer rerank experiment that pushes repeated chunks from the same sermon down a bit without fully banning them:
-
-- config knob: `doc_repeat_penalty: 2.0`
-- output files:
-  - `results/sermon_doc_penalty_metrics.csv`
-  - `results/sermon_doc_penalty_per_query.json`
-
-### 12. Run the optional title-aware study
-
-```bash
+# title-aware chunk text study
 python scripts/run_eval.py --config configs/sermon_title_aware.yaml
-```
 
-This keeps the sermon chunking the same, but prefixes each chunk with the sermon title before indexing:
-
-- config knob: `chunking.include_title: true`
-- output files:
-  - `results/sermon_title_aware_metrics.csv`
-  - `results/sermon_title_aware_per_query.json`
-
-### 13. Run the optional metadata-rerank study
-
-```bash
+# metadata-rerank study
 python scripts/run_eval.py --config configs/sermon_metadata_rerank.yaml
-```
 
-This keeps the title-aware dense retrieval path, then reranks candidates with small sermon-specific metadata hints:
-
-- `title_hint_boost`: boosts title/day/lesson matches like `第六篇`, `Day6`, `最后一天`
-- `series_hint_boost`: keeps `布道会` queries inside the seminar series before applying the day/title hint
-- `opening_chunk_boost`: boosts early chunks when the query explicitly asks about the opening of a sermon
-- output files:
-  - `results/sermon_metadata_rerank_metrics.csv`
-  - `results/sermon_metadata_rerank_per_query.json`
-
-### 14. Run the recommended sermon dense config
-
-```bash
+# current best local sermon dense path
 python scripts/run_eval.py --config configs/sermon_dense_recommended.yaml
 ```
 
-This is the current best sermon dense path in one file:
+These are all real study paths, but I keep them separate from the shared sermon baseline on purpose:
 
-- title-aware chunks
-- metadata rerank enabled
-- output files:
-  - `results/sermon_dense_recommended_metrics.csv`
-  - `results/sermon_dense_recommended_per_query.json`
+- `sermon_chromadb_ragas.yaml`: optional ChromaDB + `ragas_context_recall` smoke path
+- `sermon_doc_dedup.yaml`: hard doc-level dedupe study
+- `sermon_doc_penalty.yaml`: softer doc repeat penalty study
+- `sermon_title_aware.yaml`: prepend sermon title into chunk text before retrieval
+- `sermon_metadata_rerank.yaml`: add small day/title/opening-chunk hints after dense retrieval
+- `sermon_dense_recommended.yaml`: current best local sermon dense path
 
 ## Configuration
 
@@ -338,23 +289,17 @@ Current run artifacts:
 - `results/sermon_chromadb_ragas_per_query.json`
 - [`docs/sermon_failure_cases.md`](/Users/yinshi/Documents/breadrag/docs/sermon_failure_cases.md)
 
-Current 500-sample full-grid highlights:
+Current checked-in HotpotQA artifact:
 
-| config slice | config | Recall@3 | MRR | Hit Rate |
-|---|---|---:|---:|---:|
-| best sparse baseline | `bm25_fixed_top3` | `0.635` | `0.8196` | `0.954` |
-| best dense Recall@3 | `dense_paragraph_top3_all-MiniLM-L6-v2` | `0.726` | `0.8968` | `0.988` |
-| best dense MRR | `dense_paragraph_top3_multi-qa-MiniLM-L6-cos-v1` | `0.703` | `0.8972` | `0.986` |
-| best hybrid Recall@3 | `hybrid_paragraph_top3_all-MiniLM-L6-v2` | `0.742` | `0.8870` | `0.988` |
-| best Hit Rate | `hybrid_sentence_top3_all-MiniLM-L6-v2` | `0.702` | `0.8648` | `0.992` |
+The committed [`results/metrics_summary.csv`](/Users/yinshi/Documents/breadrag/results/metrics_summary.csv) is a small local checkpoint from `configs/default.yaml --limit 20 --skip-unavailable`. That keeps the repo runnable when dense models are not cached locally, but it is not the full HotpotQA comparison grid.
 
-Average across the whole 15-config HotpotQA grid:
+| config | status | n_queries | Recall@3 | MRR | Hit Rate |
+|---|---|---:|---:|---:|---:|
+| `bm25_sentence_top3` | `completed` | `20` | `0.6750` | `0.8917` | `0.9500` |
+| `dense_sentence_top3_minilm` | `skipped` | `20` | `—` | `—` | `—` |
+| `hybrid_sentence_top3_minilm` | `skipped` | `20` | `—` | `—` | `—` |
 
-| retrieval mode | avg Recall@3 | avg MRR | avg Hit Rate |
-|---|---:|---:|---:|
-| `bm25` | `0.6243` | `0.8138` | `0.9500` |
-| `dense` | `0.6893` | `0.8809` | `0.9787` |
-| `hybrid` | `0.7235` | `0.8791` | `0.9897` |
+The broader comparison setup is still in [`configs/experiment_grid.yaml`](/Users/yinshi/Documents/breadrag/configs/experiment_grid.yaml). On a machine with the embedding models cached, that is the config I would rerun for the fuller HotpotQA benchmark table.
 
 Current sermon baseline highlights on the 50 labeled transcript questions:
 
@@ -411,11 +356,9 @@ Current eval CLI example:
 saved metrics summary: results/metrics_summary.csv
 saved per-query results: results/per_query_results.json
 configs run:
-- bm25_fixed_top3: Recall@3=0.6350 MRR=0.8196 HitRate=0.9540
-- bm25_sentence_top3: Recall@3=0.6090 MRR=0.8059 HitRate=0.9440
-- bm25_paragraph_top3: Recall@3=0.6290 MRR=0.8158 HitRate=0.9520
-- dense_fixed_top3_all-MiniLM-L6-v2: Recall@3=0.7010 MRR=0.8812 HitRate=0.9780
-- hybrid_paragraph_top3_all-MiniLM-L6-v2: Recall@3=0.7420 MRR=0.8870 HitRate=0.9880
+- bm25_sentence_top3: Recall@3=0.6750 MRR=0.8917 HitRate=0.9500
+- dense_sentence_top3_minilm: skipped (embedding model not cached locally)
+- hybrid_sentence_top3_minilm: skipped (embedding model not cached locally)
 ```
 
 Current dense retrieval example:
@@ -441,8 +384,7 @@ I kept the design simple on purpose.
 - Dense retrieval with FAISS is the next simplest reasonable step for semantic search
 - Hybrid retrieval is simple enough to add, but still useful for checking multi-hop coverage
 - FAISS stays the default dense path because it is the lightest local baseline, but the same retriever can now swap to ChromaDB when I want to inspect a second vector store
-- The standard eval config now uses `500` samples, while `--limit` is reserved for debug runs only
-- In the full 15-config benchmark, paragraph chunking gave the strongest average retrieval quality while hybrid gave the best average coverage
+- The default HotpotQA config is still aimed at a larger run, but I keep the checked-in artifact small enough that the repo stays runnable in a more limited local environment
 - The sermon path stages real local transcripts first, then uses a small manually labeled eval set instead of pretending benchmark labels already exist
 - On the sermon set, chunk granularity changes alone did not fix the remaining misses, but a simple title-aware chunk text did improve dense retrieval a lot
 - On the sermon set, the last two dense misses were resolved by a very small metadata-aware rerank instead of a bigger model or a more complicated architecture
@@ -452,6 +394,7 @@ More detail is in [`docs/design_decisions.md`](/Users/yinshi/Documents/breadrag/
 ## Limitations
 
 - The sermon eval set is now `50` labeled questions, which is much healthier for iteration, but it is still not large enough to call a stable benchmark
+- The checked-in HotpotQA summary file is a small local checkpoint, not the full experiment grid; the broader comparison should be regenerated when dense model access is available
 - The answer-quality score is still a simple overlap-style proxy, not a full generated-answer evaluation
 - The strongest sermon path today uses sermon-specific hints, so I treat it as a practical local solution, not a universal retrieval recipe
 - The optional ChromaDB and RAGAS paths are real and runnable, but they are still side paths compared with the main FAISS-based benchmark flow
